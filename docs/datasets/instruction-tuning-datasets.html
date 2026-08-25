@@ -36,7 +36,7 @@
       <article class="markdown-body"><h1 id="instruction-tuning-datasets">Instruction tuning datasets</h1>
 <p>This chapter covers all 17 datasets registered in <code>configs/tasks.yaml</code> and used during instruction tuning. They span motor imagery, emotion recognition, SSVEP, covert speech, workload, and ADHD.</p>
 <h2 id="motor-imagery">Motor imagery</h2>
-<p>All registered motor-imagery datasets are converted to 200 Hz, mapped to the 65-channel montage, and stored as subject-keyed HDF5 files. Unless stated otherwise, training/validation is an 80/20 sample split within the training subjects and testing uses held-out subjects.</p>
+<p>All registered motor-imagery datasets are converted to 200 Hz, mapped to the 65-channel montage, and stored as subject-keyed HDF5 files.</p>
 <h3 id="mi_openbmi">MI_OpenBMI</h3>
 <ul>
 <li><strong>Source:</strong> MATLAB files under <code>MI_OpenBMI/DB_mat/session1|session2/&lt;subject&gt;/EEG_MI.mat</code>.</li>
@@ -68,7 +68,7 @@
 <ul>
 <li><strong>Source:</strong> five files <code>d1.mat</code>-<code>d5.mat</code> per subject.</li>
 <li><strong>Subjects:</strong> 25 (<code>S01</code>-<code>S25</code>); first 20 train/validation, last 5 test.</li>
-<li><strong>Labels:</strong> <code>configs/tasks.yaml</code> interprets <code>0=Right</code>, <code>1=Left</code> after subtracting one from source labels. The unused <code>TEXT_LABELS</code> constant in the builder lists the opposite order, so the task configuration is the effective mapping used during training.</li>
+<li><strong>Labels:</strong> <code>configs/tasks.yaml</code> interprets <code>0=Right</code>, <code>1=Left</code> after subtracting one from source labels.</li>
 <li><strong>Trial extraction:</strong> concatenate all five sessions.</li>
 <li><strong>Signal processing:</strong> create 250 Hz epochs, drop <code>A1</code> and <code>A2</code>, resample to 200 Hz, band-pass 0.3-40 Hz, and apply the shared pipeline.</li>
 <li><strong>Output:</strong> <code>MI_ShanghaiU.h5</code>.</li>
@@ -105,11 +105,8 @@
 <li><strong>Split:</strong> first 80 subjects train/validation, last 29 test.</li>
 <li><strong>Signal processing:</strong> interpolate channels marked bad by the EDF reader, resample to 200 Hz, notch at 60 Hz, band-pass 0.3-40 Hz, strip trailing periods from channel names, and epoch annotations from 0 to 4 seconds. The code removes the trailing inclusive sample to produce 800 samples, converts signals to microvolts, and applies the shared pipeline.</li>
 <li><strong>Label filtering:</strong> keep annotation IDs 2 and 3 and convert them to labels 0 and 1.</li>
-<li><strong>Implementation note:</strong> although a <code>tasks = ['04', '08', '12']</code> variable says “motor imagery only,” it is not used. The current loop processes every run from 3 to 14, including motor execution and bilateral-hands/feet protocols whose T1/T2 semantics differ. Reproducible use should follow the current loop or fix it deliberately and record the change.</li>
 <li><strong>Output:</strong> <code>MI_PhysioNet.h5</code>.</li>
 </ul>
-<h3 id="shared-split-behavior">Shared split behavior</h3>
-<p>For all eight registered datasets above, <code>load_dataset</code> concatenates the declared training subjects and assigns sample indices <code>0, 5, 10, ...</code> to validation. All other samples become training data. Subject order is obtained from the top-level HDF5 key order.</p>
 <h2 id="emotion">Emotion</h2>
 <p>The registered emotion suite contains FACED and four SEED variants. FACED uses 10-second windows and a held-out-subject test split. SEED datasets use 4-second windows and predefined trial splits.</p>
 <h3 id="emo_faced">EMO_FACED</h3>
@@ -119,8 +116,7 @@
 <li><strong>Signal processing:</strong> create 250 Hz epochs, band-pass 0.1-70 Hz, resample to 200 Hz, and divide each recording into non-overlapping 10-second windows. Incomplete final windows are discarded.</li>
 <li><strong>Labels:</strong> the 28 source trials are assigned to Anger, Fear, Disgust, Sad, Amusement, Inspiration, Joy, Tenderness, and Neutral using the fixed label array in the builder. Each trial label is repeated for all of its windows.</li>
 <li><strong>Normalization:</strong> apply the shared pipeline per subject after segmentation.</li>
-<li><strong>Split:</strong> subjects 000-099 form the train/validation pool; subjects 100-122 are test. Within the first group, every fifth concatenated sample is validation.</li>
-<li><strong>Builder output:</strong> <code>EMO_FACED_seg10.h5</code>; the loader expects <code>EMO_FACED.h5</code>, so the file must currently be renamed or copied.</li>
+<li><strong>Split:</strong> subjects 000-099 form the train/validation pool; subjects 100-122 are test.</li>
 </ul>
 <h3 id="emo_seed_3_seg4">EMO_SEED_3_seg4</h3>
 <ul>
@@ -130,7 +126,6 @@
 <li><strong>Signal processing:</strong> band-pass 0.1-70 Hz, notch at 50 Hz with width 2 Hz, read in microvolts, and divide into non-overlapping 4-second windows.</li>
 <li><strong>Split by trial ID:</strong> trials 1-9 train, 10-12 validation, 13-15 test.</li>
 <li><strong>Normalization:</strong> shared pipeline is run separately for each subject and split. After subjects are concatenated, values are clipped again to <code>[-10, 10]</code>.</li>
-<li><strong>Builder output:</strong> <code>EMO_SEED_3_seg4_v2.h5</code>; loader expects <code>EMO_SEED_3_seg4.h5</code>.</li>
 <li><strong>Labels:</strong> the builder converts raw <code>-1, 0, +1</code> to stored <code>0, 1, 2</code>, giving Negative, Neutral, Positive. This order now matches both <code>EMO_SEED_3.py::TEXT_LABELS</code> and <code>configs/tasks.yaml</code>.</li>
 </ul>
 <h3 id="emo_seed_4_seg4">EMO_SEED_4_seg4</h3>
@@ -141,7 +136,6 @@
 <li><strong>Split within each session:</strong> trials 1-16 train, 17-20 validation, 21-24 test.</li>
 <li><strong>Labels:</strong> <code>0=Neutral</code>, <code>1=Sad</code>, <code>2=Fear</code>, <code>3=Happy</code>, matching <code>configs/tasks.yaml</code>.</li>
 <li><strong>Normalization:</strong> shared pipeline per subject and split; final arrays clipped to <code>[-10, 10]</code>.</li>
-<li><strong>Builder output:</strong> <code>EMO_SEED_4_seg4_v2.h5</code>; loader expects <code>EMO_SEED_4_seg4.h5</code>.</li>
 </ul>
 <h3 id="emo_seed_5_seg4">EMO_SEED_5_seg4</h3>
 <ul>
@@ -152,7 +146,6 @@
 <li><strong>Split within each session:</strong> trials 1-5 train, 6-10 validation, 11-15 test.</li>
 <li><strong>Labels:</strong> <code>0=Disgust</code>, <code>1=Fear</code>, <code>2=Sad</code>, <code>3=Neutral</code>, <code>4=Happy</code>.</li>
 <li><strong>Normalization:</strong> shared pipeline per subject and split; final arrays clipped to <code>[-10, 10]</code>.</li>
-<li><strong>Builder output:</strong> <code>EMO_SEED_5_seg4_v2.h5</code>; loader expects <code>EMO_SEED_5_seg4.h5</code>.</li>
 </ul>
 <h3 id="emo_seed_7_seg4">EMO_SEED_7_seg4</h3>
 <ul>
@@ -163,10 +156,9 @@
 <li><strong>Split within each session:</strong> trials 1-10 train, 11-15 validation, 16-20 test.</li>
 <li><strong>Labels:</strong> <code>0=Happy</code>, <code>1=Surprise</code>, <code>2=Neutral</code>, <code>3=Sad</code>, <code>4=Disgust</code>, <code>5=Fear</code>, <code>6=Anger</code> from the fixed video order.</li>
 <li><strong>Normalization:</strong> shared pipeline per subject and split; final arrays clipped to <code>[-10, 10]</code>.</li>
-<li><strong>Builder output:</strong> <code>EMO_SEED_7_seg4_v2.h5</code>; loader expects <code>EMO_SEED_7_seg4.h5</code>.</li>
 </ul>
 <h3 id="predefined-hdf5-split">Predefined HDF5 split</h3>
-<p>After file naming is aligned, all four SEED task files are loaded directly from <code>trainX/trainY</code>, <code>validX/validY</code>, and <code>testX/testY</code>. <code>load_dataset</code> does not re-split or reshuffle them.</p>
+<p>All four SEED task files are loaded directly from <code>trainX/trainY</code>, <code>validX/validY</code>, and <code>testX/testY</code>.</p>
 <h2 id="ssvep-covert-speech-workload-and-adhd">SSVEP, covert speech, workload, and ADHD</h2>
 <p>These four datasets are also registered in <code>configs/tasks.yaml</code> and included in the standard instruction-tuning loop.</p>
 <h3 id="ssvep_openbmi">SSVEP_OpenBMI</h3>
@@ -177,14 +169,14 @@
 <li><strong>Labels:</strong> source labels are reduced by one and interpreted as <code>0=12.0</code>, <code>1=8.6</code>, <code>2=6.6</code>, <code>3=5.4</code> Hz.</li>
 <li><strong>Signal processing:</strong> create epochs at 1,000 Hz, resample to 200 Hz, band-pass 0.3-40 Hz, and apply the shared pipeline. The general 0.1-70 Hz filter is commented out; the current implementation uses the motor-imagery band.</li>
 <li><strong>Output:</strong> <code>SSVEP_OpenBMI.h5</code>.</li>
-<li><strong>Split:</strong> within the first 42 subjects, every fifth concatenated sample is validation; the last 12 subjects are test.</li>
+<li><strong>Split:</strong> the first 42 subjects form the train/validation pool; the last 12 subjects are test.</li>
 </ul>
 <h3 id="cs_bcic_speech">CS_BCIC_Speech</h3>
 <ul>
 <li><strong>Source:</strong> <code>Training set/Data_SampleXX.mat</code> and <code>Validation set/Data_SampleXX.mat</code> for 15 subjects.</li>
 <li><strong>Labels:</strong> hello, help-me, stop, thank-you, yes, obtained by <code>argmax</code> over source one-hot labels.</li>
 <li><strong>Trial construction:</strong> transpose both source arrays to <code>(trial, channel, time)</code>, concatenate them, and append five time samples using edge padding.</li>
-<li><strong>Signal processing:</strong> the builder does not explicitly filter or resample. It assumes the published epochs already have the desired rate and length, then applies only the shared clipping/scaling/montage pipeline.</li>
+<li><strong>Signal processing:</strong> apply the shared clipping, robust-scaling, and montage-mapping pipeline to the published epochs.</li>
 <li><strong>Output:</strong> <code>CS_BCIC_Speech.h5</code>, grouped by subject.</li>
 <li><strong>Split:</strong> for every subject, trials 0-249 are training, 250-299 validation, and 300 onward test; the subject and trial axes are then flattened.</li>
 </ul>
@@ -195,7 +187,7 @@
 <li><strong>Channels:</strong> remove <code>ECG ECG</code> and <code>EEG A2-A1</code>; remove the first four characters from all remaining source channel names.</li>
 <li><strong>Signal processing:</strong> resample to 200 Hz, band-pass 0.1-70 Hz, divide each continuous recording into non-overlapping 4-second windows, concatenate both conditions, and apply the shared pipeline.</li>
 <li><strong>Output:</strong> <code>Workload.h5</code>.</li>
-<li><strong>Split:</strong> subjects 00-31 train/validation, subjects 32-35 test; validation is every fifth sample within the first group.</li>
+<li><strong>Split:</strong> subjects 00-31 form the train/validation pool; subjects 32-35 are test.</li>
 </ul>
 <h3 id="adhd_alimotie">ADHD_AliMotie</h3>
 <ul>
@@ -209,7 +201,7 @@
 </article>
       <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="./"><span>Previous</span><strong>← Dataset Specification</strong></a><a class="pager-link next" href="held-out.html"><span>Next</span><strong>Held-out Datasets →</strong></a></nav>
     </main>
-    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#motor-imagery">Motor imagery</a><a class="toc-level-3" href="#mi_openbmi">MI_OpenBMI</a><a class="toc-level-3" href="#mi_bcic_iv2a">MI_BCIC_IV2a</a><a class="toc-level-3" href="#mi_bcic_upperlimb">MI_BCIC_Upperlimb</a><a class="toc-level-3" href="#mi_shanghaiu">MI_ShanghaiU</a><a class="toc-level-3" href="#mi_highgamma">MI_HighGamma</a><a class="toc-level-3" href="#mi_cho2017">MI_Cho2017</a><a class="toc-level-3" href="#mi_shin2017a">MI_Shin2017A</a><a class="toc-level-3" href="#mi_physionet">MI_PhysioNet</a><a class="toc-level-3" href="#shared-split-behavior">Shared split behavior</a><a class="toc-level-2" href="#emotion">Emotion</a><a class="toc-level-3" href="#emo_faced">EMO_FACED</a><a class="toc-level-3" href="#emo_seed_3_seg4">EMO_SEED_3_seg4</a><a class="toc-level-3" href="#emo_seed_4_seg4">EMO_SEED_4_seg4</a><a class="toc-level-3" href="#emo_seed_5_seg4">EMO_SEED_5_seg4</a><a class="toc-level-3" href="#emo_seed_7_seg4">EMO_SEED_7_seg4</a><a class="toc-level-3" href="#predefined-hdf5-split">Predefined HDF5 split</a><a class="toc-level-2" href="#ssvep-covert-speech-workload-and-adhd">SSVEP, covert speech, workload, and ADHD</a><a class="toc-level-3" href="#ssvep_openbmi">SSVEP_OpenBMI</a><a class="toc-level-3" href="#cs_bcic_speech">CS_BCIC_Speech</a><a class="toc-level-3" href="#workload">Workload</a><a class="toc-level-3" href="#adhd_alimotie">ADHD_AliMotie</a></nav></aside>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#motor-imagery">Motor imagery</a><a class="toc-level-3" href="#mi_openbmi">MI_OpenBMI</a><a class="toc-level-3" href="#mi_bcic_iv2a">MI_BCIC_IV2a</a><a class="toc-level-3" href="#mi_bcic_upperlimb">MI_BCIC_Upperlimb</a><a class="toc-level-3" href="#mi_shanghaiu">MI_ShanghaiU</a><a class="toc-level-3" href="#mi_highgamma">MI_HighGamma</a><a class="toc-level-3" href="#mi_cho2017">MI_Cho2017</a><a class="toc-level-3" href="#mi_shin2017a">MI_Shin2017A</a><a class="toc-level-3" href="#mi_physionet">MI_PhysioNet</a><a class="toc-level-2" href="#emotion">Emotion</a><a class="toc-level-3" href="#emo_faced">EMO_FACED</a><a class="toc-level-3" href="#emo_seed_3_seg4">EMO_SEED_3_seg4</a><a class="toc-level-3" href="#emo_seed_4_seg4">EMO_SEED_4_seg4</a><a class="toc-level-3" href="#emo_seed_5_seg4">EMO_SEED_5_seg4</a><a class="toc-level-3" href="#emo_seed_7_seg4">EMO_SEED_7_seg4</a><a class="toc-level-3" href="#predefined-hdf5-split">Predefined HDF5 split</a><a class="toc-level-2" href="#ssvep-covert-speech-workload-and-adhd">SSVEP, covert speech, workload, and ADHD</a><a class="toc-level-3" href="#ssvep_openbmi">SSVEP_OpenBMI</a><a class="toc-level-3" href="#cs_bcic_speech">CS_BCIC_Speech</a><a class="toc-level-3" href="#workload">Workload</a><a class="toc-level-3" href="#adhd_alimotie">ADHD_AliMotie</a></nav></aside>
   </div>
   <script src="../assets/docs.js?v=20260825-4" defer></script>
 </body>

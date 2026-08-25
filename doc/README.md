@@ -21,4 +21,4 @@ This directory documents the public LEAF code release as it is implemented in th
 
 ## Scope
 
-The current `configs/tasks.yaml` registers 17 datasets for instruction tuning and standard evaluation. SSVEP, covert speech, workload, and ADHD are part of this suite. Weibo2014 and Dreyer2023 are excluded from instruction tuning and reserved for held-out zero-shot evaluation. The pretraining loader consumes a separate directory of `.npy` arrays; this release does not include a manifest that identifies the original datasets used to construct that pretraining corpus.
+The current `configs/tasks.yaml` registers 17 datasets for instruction tuning and standard evaluation. SSVEP, covert speech, workload, and ADHD are part of this suite. Weibo2014 and Dreyer2023 are excluded from instruction tuning and reserved for held-out zero-shot evaluation.

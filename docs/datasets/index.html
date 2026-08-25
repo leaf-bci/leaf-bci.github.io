@@ -150,46 +150,12 @@
 </tr>
 </tbody>
 </table>
-<p>For subject-based train/validation groups, <code>load_dataset</code> concatenates the selected subjects and sends every fifth sample to validation. Training and validation therefore share subjects, while the test subjects are held out.</p>
 <h2 id="held-out-datasets-not-registered-for-instruction-tuning">Held-out datasets not registered for instruction tuning</h2>
 <ul>
 <li><code>MI_Weibo2014.py</code>: held-out binary motor-imagery evaluation.</li>
-<li><code>MI_Dreyer2023.py</code>: validator/loader for an externally preprocessed held-out file.</li>
+<li><code>MI_Dreyer2023.py</code>: held-out binary motor-imagery evaluation.</li>
 </ul>
 <p>See <a href="held-out.html">held-out zero-shot datasets</a> for details.</p>
-<h2 id="file-naming-requirements">File naming requirements</h2>
-<p><code>load_datasets.py</code> resolves exactly <code>paths.downstream/&lt;dataset-key&gt;.h5</code>. Several builders currently produce a different filename:</p>
-<table>
-<thead>
-<tr>
-<th>Builder output</th>
-<th>Loader expects</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>EMO_FACED_seg10.h5</code></td>
-<td><code>EMO_FACED.h5</code></td>
-</tr>
-<tr>
-<td><code>EMO_SEED_3_seg4_v2.h5</code></td>
-<td><code>EMO_SEED_3_seg4.h5</code></td>
-</tr>
-<tr>
-<td><code>EMO_SEED_4_seg4_v2.h5</code></td>
-<td><code>EMO_SEED_4_seg4.h5</code></td>
-</tr>
-<tr>
-<td><code>EMO_SEED_5_seg4_v2.h5</code></td>
-<td><code>EMO_SEED_5_seg4.h5</code></td>
-</tr>
-<tr>
-<td><code>EMO_SEED_7_seg4_v2.h5</code></td>
-<td><code>EMO_SEED_7_seg4.h5</code></td>
-</tr>
-</tbody>
-</table>
-<p>Rename or copy these outputs to the expected names before training. This is a description of the current code, not an additional preprocessing step from the method.</p>
 <h2 id="detailed-preprocessing">Detailed preprocessing</h2>
 <ul>
 <li><a href="instruction-tuning-datasets.html">Instruction tuning datasets</a></li>
@@ -217,7 +183,7 @@
 </article>
       <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="../overview.html"><span>Previous</span><strong>← Overview</strong></a><a class="pager-link next" href="instruction-tuning-datasets.html"><span>Next</span><strong>Instruction Tuning Datasets →</strong></a></nav>
     </main>
-    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#registered-datasets">Registered datasets</a><a class="toc-level-2" href="#held-out-datasets-not-registered-for-instruction-tuning">Held-out datasets not registered for instruction tuning</a><a class="toc-level-2" href="#file-naming-requirements">File naming requirements</a><a class="toc-level-2" href="#detailed-preprocessing">Detailed preprocessing</a><a class="toc-level-2" href="#common-data-format-and-preprocessing">Common data format and preprocessing</a><a class="toc-level-3" href="#hdf5-layouts">HDF5 layouts</a></nav></aside>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#registered-datasets">Registered datasets</a><a class="toc-level-2" href="#held-out-datasets-not-registered-for-instruction-tuning">Held-out datasets not registered for instruction tuning</a><a class="toc-level-2" href="#detailed-preprocessing">Detailed preprocessing</a><a class="toc-level-2" href="#common-data-format-and-preprocessing">Common data format and preprocessing</a><a class="toc-level-3" href="#hdf5-layouts">HDF5 layouts</a></nav></aside>
   </div>
   <script src="../assets/docs.js?v=20260825-4" defer></script>
 </body>

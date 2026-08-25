@@ -26,8 +26,6 @@ For each sample:
 3. Independently, with 90% probability, compute the normalized mean of the dataset's candidate-label embeddings, average it with the instruction embedding, and normalize again.
 4. Convert the stored integer label to its ordered label string in `configs/tasks.yaml`, then map that string to the global prototype index.
 
-Instruction selection and label-aware blending remain random in the validation dataset; the `training` flag controls only signal padding/cropping.
-
 ## Optimization
 
 The pretrained Tower is not frozen. The full LEAF model is trained end to end.

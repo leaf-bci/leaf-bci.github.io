@@ -12,7 +12,7 @@ LEAF is a language-aligned EEG foundation model. It first learns EEG structure w
 4. **Pretrain the EEG Tower.** Spectral perturbation is applied to the input. A bidirectional masked branch and a causal next-window branch reconstruct the original waveform.
 5. **Cache language embeddings.** All target labels and instruction strings are encoded by the selected text model and stored in `text_embeddings/`.
 6. **Instruction-tune LEAF.** The pretrained Tower and Instruction-conditioned Q-Former are trained jointly. The output EEG embedding is classified against frozen text prototypes using cross-entropy.
-7. **Evaluate or fine-tune.** Direct inference compares EEG and text embeddings without additional training. Full single-dataset fine-tuning adds a task-specific classifier over Tower tokens and trains it together with the Tower.
+7. **Evaluate or fine-tune.** Direct inference compares EEG and text embeddings without additional training. Dataset-specific fine-tuning adds a task-specific classification head and adapts the model to one selected dataset.
 
 ## Main entry points
 
@@ -36,8 +36,6 @@ The downstream HDF5 files and the pretraining `.npy` corpus are separate product
 
 - `paths.downstream` contains labeled HDF5 datasets used by instruction tuning, inference, and downstream fine-tuning.
 - `paths.pretrain` contains unlabeled `.npy` trial arrays used only by `a_pretrain.py`.
-
-The repository includes builders for the labeled HDF5 files. It does not include a single script or manifest that assembles all pretraining `.npy` files, so the exact pretraining-dataset composition cannot be recovered from this public code alone.
 
 ## Architecture
 

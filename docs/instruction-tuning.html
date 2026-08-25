@@ -54,7 +54,6 @@
 <li>Independently, with 90% probability, compute the normalized mean of the dataset's candidate-label embeddings, average it with the instruction embedding, and normalize again.</li>
 <li>Convert the stored integer label to its ordered label string in <code>configs/tasks.yaml</code>, then map that string to the global prototype index.</li>
 </ol>
-<p>Instruction selection and label-aware blending remain random in the validation dataset; the <code>training</code> flag controls only signal padding/cropping.</p>
 <h2 id="optimization">Optimization</h2>
 <p>The pretrained Tower is not frozen. The full LEAF model is trained end to end.</p>
 <table>

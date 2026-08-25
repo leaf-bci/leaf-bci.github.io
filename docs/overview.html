@@ -44,7 +44,7 @@
 <li><strong>Pretrain the EEG Tower.</strong> Spectral perturbation is applied to the input. A bidirectional masked branch and a causal next-window branch reconstruct the original waveform.</li>
 <li><strong>Cache language embeddings.</strong> All target labels and instruction strings are encoded by the selected text model and stored in <code>text_embeddings/</code>.</li>
 <li><strong>Instruction-tune LEAF.</strong> The pretrained Tower and Instruction-conditioned Q-Former are trained jointly. The output EEG embedding is classified against frozen text prototypes using cross-entropy.</li>
-<li><strong>Evaluate or fine-tune.</strong> Direct inference compares EEG and text embeddings without additional training. Full single-dataset fine-tuning adds a task-specific classifier over Tower tokens and trains it together with the Tower.</li>
+<li><strong>Evaluate or fine-tune.</strong> Direct inference compares EEG and text embeddings without additional training. Dataset-specific fine-tuning adds a task-specific classification head and adapts the model to one selected dataset.</li>
 </ol>
 <h2 id="main-entry-points">Main entry points</h2>
 <table>
@@ -109,7 +109,6 @@
 <li><code>paths.downstream</code> contains labeled HDF5 datasets used by instruction tuning, inference, and downstream fine-tuning.</li>
 <li><code>paths.pretrain</code> contains unlabeled <code>.npy</code> trial arrays used only by <code>a_pretrain.py</code>.</li>
 </ul>
-<p>The repository includes builders for the labeled HDF5 files. It does not include a single script or manifest that assembles all pretraining <code>.npy</code> files, so the exact pretraining-dataset composition cannot be recovered from this public code alone.</p>
 <h2 id="architecture">Architecture</h2>
 <p>The default input convention is 65 channels at 200 Hz, with a maximum instruction-tuning length of 2,000 samples. The tokenizer divides EEG into non-overlapping 100-sample windows and applies a temporal convolution, a spatial convolution across all channels, synchronized batch normalization, GELU, pooling, and dropout.</p>
 <p>The Spectral-Temporal Reconstruction Tower has two independent 12-layer Transformer branches sharing the tokenizer and positional embedding:</p>

@@ -16,12 +16,6 @@ Trials may have variable time length across files. The dataset wrapper converts 
 - training: random left/right zero padding or random crop;
 - validation: right zero padding or leading crop.
 
-The public repository does not contain a pretraining-corpus manifest or the assembly script that maps original dataset names to these `.npy` files. Document that separately when creating a new corpus.
-
-## Train/validation split
-
-Files are traversed in sorted filename order, then trials in increasing index order. A single global counter assigns every tenth trial (`counter % 10 == 9`) to validation; all others are training. This is a deterministic 90/10 trial split, not a subject-level split.
-
 ## Objective
 
 For every batch:
@@ -33,8 +27,6 @@ For every batch:
 5. Optimize `masked_reconstruction_loss + next_window_reconstruction_loss`.
 
 The causal branch does not prepend a beginning-of-sequence token. Training and inference use the same positional indices, avoiding the former one-position shift between the two paths.
-
-The same random spectral corruption and masking are also used during validation, so individual validation losses are stochastic.
 
 ## Default hyperparameters
 

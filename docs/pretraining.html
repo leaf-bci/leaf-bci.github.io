@@ -44,9 +44,6 @@ file.npy[i]         shape: (65, time)</code></pre>
 <li>training: random left/right zero padding or random crop;</li>
 <li>validation: right zero padding or leading crop.</li>
 </ul>
-<p>The public repository does not contain a pretraining-corpus manifest or the assembly script that maps original dataset names to these <code>.npy</code> files. Document that separately when creating a new corpus.</p>
-<h2 id="trainvalidation-split">Train/validation split</h2>
-<p>Files are traversed in sorted filename order, then trials in increasing index order. A single global counter assigns every tenth trial (<code>counter % 10 == 9</code>) to validation; all others are training. This is a deterministic 90/10 trial split, not a subject-level split.</p>
 <h2 id="objective">Objective</h2>
 <p>For every batch:</p>
 <ol type="1">
@@ -57,7 +54,6 @@ file.npy[i]         shape: (65, time)</code></pre>
 <li>Optimize <code>masked_reconstruction_loss + next_window_reconstruction_loss</code>.</li>
 </ol>
 <p>The causal branch does not prepend a beginning-of-sequence token. Training and inference use the same positional indices, avoiding the former one-position shift between the two paths.</p>
-<p>The same random spectral corruption and masking are also used during validation, so individual validation losses are stochastic.</p>
 <h2 id="default-hyperparameters">Default hyperparameters</h2>
 <table>
 <thead>
@@ -145,7 +141,7 @@ file.npy[i]         shape: (65, time)</code></pre>
 </article>
       <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="datasets/held-out.html"><span>Previous</span><strong>← Held-out Datasets</strong></a><a class="pager-link next" href="instruction-tuning.html"><span>Next</span><strong>Instruction tuning →</strong></a></nav>
     </main>
-    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#input-corpus">Input corpus</a><a class="toc-level-2" href="#trainvalidation-split">Train/validation split</a><a class="toc-level-2" href="#objective">Objective</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#multi-gpu-behavior">Multi-GPU behavior</a><a class="toc-level-2" href="#command">Command</a><a class="toc-level-2" href="#outputs">Outputs</a></nav></aside>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#input-corpus">Input corpus</a><a class="toc-level-2" href="#objective">Objective</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#multi-gpu-behavior">Multi-GPU behavior</a><a class="toc-level-2" href="#command">Command</a><a class="toc-level-2" href="#outputs">Outputs</a></nav></aside>
   </div>
   <script src="assets/docs.js?v=20260825-4" defer></script>
 </body>

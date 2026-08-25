@@ -34,9 +34,7 @@
     <main class="docs-main" id="doc-content">
       <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Dataset-specific Fine-tuning</span></nav>
       <article class="markdown-body"><h1 id="dataset-specific-fine-tuning-with-a-classification-head">Dataset-specific fine-tuning with a classification head</h1>
-<p><code>d_downstream.py</code> adapts an instruction-tuned LEAF checkpoint to one selected dataset. It adds a <code>FlattenClassifier</code> over Tower tokens and trains both the Tower and classifier end to end.</p>
-<h2 id="model-behavior">Model behavior</h2>
-<p>The classifier uses concatenated Tower tokens, not the aligned Q-Former embedding. Although an instruction embedding is passed through <code>LEAF.forward</code>, the returned Q-Former embedding is ignored by the classifier; the classification logits are therefore independent of the selected instruction text in the current implementation.</p>
+<p><code>d_downstream.py</code> adapts an instruction-tuned LEAF checkpoint to one selected dataset by adding a task-specific classification head and optimizing it together with the EEG model.</p>
 <h2 id="default-hyperparameters">Default hyperparameters</h2>
 <table>
 <thead>
@@ -96,7 +94,6 @@
 </tr>
 </tbody>
 </table>
-<p>The YAML field <code>downstream.check_val_every_n_epoch=5</code> is not used by this manual loop. Validation and test metrics are computed after every epoch. No early stopping or best-checkpoint selection is implemented.</p>
 <h2 id="metrics">Metrics</h2>
 <p>Each epoch records validation and test balanced accuracy, AUROC, weighted F1, and Cohen's kappa. Multiclass AUROC uses macro one-vs-rest averaging.</p>
 <h2 id="command">Command</h2>
@@ -109,11 +106,10 @@
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--seed</span> 42</span></code></pre></div>
 <p>Results are saved to:</p>
 <pre class="text"><code>ckpt/&lt;architecture&gt;/&lt;tuning-run&gt;/&lt;itEpo&gt;-&lt;seed&gt;/&lt;dataset&gt;.npz</code></pre>
-<p>The implementation is CUDA-oriented: the training loop requests CUDA autocast explicitly even when <code>--gpu -1</code> is supplied.</p>
 </article>
       <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="direct-inference.html"><span>Previous</span><strong>← Direct Inference</strong></a></nav>
     </main>
-    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#model-behavior">Model behavior</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#metrics">Metrics</a><a class="toc-level-2" href="#command">Command</a></nav></aside>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#metrics">Metrics</a><a class="toc-level-2" href="#command">Command</a></nav></aside>
   </div>
   <script src="assets/docs.js?v=20260825-4" defer></script>
 </body>

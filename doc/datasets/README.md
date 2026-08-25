@@ -24,28 +24,12 @@ The table below reflects `configs/tasks.yaml` and `load_datasets.py`, which toge
 | Workload | `Workload` | Resting, Workload | 32 train/validation, 4 test |
 | Healthcare | `ADHD_AliMotie` | Healthy, ADHD | predefined subject split |
 
-For subject-based train/validation groups, `load_dataset` concatenates the selected subjects and sends every fifth sample to validation. Training and validation therefore share subjects, while the test subjects are held out.
-
 ## Held-out datasets not registered for instruction tuning
 
 - `MI_Weibo2014.py`: held-out binary motor-imagery evaluation.
-- `MI_Dreyer2023.py`: validator/loader for an externally preprocessed held-out file.
+- `MI_Dreyer2023.py`: held-out binary motor-imagery evaluation.
 
 See [held-out zero-shot datasets](held-out.md) for details.
-
-## File naming requirements
-
-`load_datasets.py` resolves exactly `paths.downstream/<dataset-key>.h5`. Several builders currently produce a different filename:
-
-| Builder output | Loader expects |
-|---|---|
-| `EMO_FACED_seg10.h5` | `EMO_FACED.h5` |
-| `EMO_SEED_3_seg4_v2.h5` | `EMO_SEED_3_seg4.h5` |
-| `EMO_SEED_4_seg4_v2.h5` | `EMO_SEED_4_seg4.h5` |
-| `EMO_SEED_5_seg4_v2.h5` | `EMO_SEED_5_seg4.h5` |
-| `EMO_SEED_7_seg4_v2.h5` | `EMO_SEED_7_seg4.h5` |
-
-Rename or copy these outputs to the expected names before training. This is a description of the current code, not an additional preprocessing step from the method.
 
 ## Detailed preprocessing
 

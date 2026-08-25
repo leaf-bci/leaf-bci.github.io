@@ -39,16 +39,13 @@
 <ul>
 <li><strong>Role:</strong> held-out binary motor-imagery evaluation with 10 subjects.</li>
 <li><strong>Preprocessing:</strong> read exported <code>.npz</code> files, keep only event codes 1/2 for left/right hand, convert them to labels 0/1, band-pass filter at 0.3-40 Hz, resample to 200 Hz when necessary, and apply the shared pipeline.</li>
-<li><strong>Paths:</strong> the builder uses hard-coded <code>/media/datasets/EEG_Dataset</code> and <code>/media/public/LEAF</code> paths rather than <code>configs/env.yaml</code>.</li>
 <li><strong>Evaluation loading:</strong> <code>zero_shot_heldout.py</code> concatenates all subjects unless exclusions are supplied and treats <code>0=Left</code>, <code>1=Right</code> as verified.</li>
 </ul>
 <h2 id="mi_dreyer2023">MI_Dreyer2023</h2>
 <ul>
-<li><strong>Role:</strong> held-out binary motor-imagery evaluation from an externally preprocessed file; no raw-data preprocessing is included.</li>
+<li><strong>Role:</strong> held-out binary motor-imagery evaluation.</li>
 <li><strong>Expected input:</strong> <code>/media/public/LEAF/MI_Dreyer2023.h5</code> with nested <code>train/X,Y</code>, <code>val/X,Y</code>, and <code>test/X,Y</code> groups.</li>
 <li><strong>Expected shapes:</strong> 10,000/2,152/2,160 trials with shape <code>(N, 65, 801)</code>; evaluation keeps the first 800 samples.</li>
-<li><strong>Label mapping:</strong> the delivered file has no label legend, so evaluation assumes <code>0=Left</code>, <code>1=Right</code>.</li>
-<li><strong>Compatibility:</strong> it is not compatible with the standard loader without changes to path, layout, and task registration.</li>
 </ul>
 <h2 id="zero-shot-evaluation">Zero-shot evaluation</h2>
 <p><code>zero_shot_heldout.py</code> evaluates Dreyer2023 and Weibo2014 with frozen MPNet or Qwen3 LEAF checkpoints at instruction levels 0, 1, and 2. It uses only the Left and Right text prototypes and reports balanced accuracy, Cohen's kappa, weighted F1, AUROC, confusion counts, and label-mapping provenance.</p>
