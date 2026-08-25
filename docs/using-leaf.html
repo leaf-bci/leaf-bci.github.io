@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Using LEAF with New EEG Data — LEAF documentation">
+  <meta name="description" content="Applying LEAF to custom EEG data — LEAF documentation">
   <meta name="theme-color" content="#f6f8f7">
-  <title>Using LEAF with New EEG Data | LEAF Docs</title>
+  <title>Applying LEAF to custom EEG data | LEAF Docs</title>
   <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/docs.css?v=20260825-6">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme-v2')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
@@ -27,13 +27,13 @@
   </header>
   <div class="sidebar-backdrop" hidden></div>
   <aside class="docs-sidebar" id="docs-sidebar">
-    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Usage</h2><div class="nav-items"><a href="using-leaf.html" aria-current="page" class="active">Using LEAF with New EEG Data</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training &amp; Evaluation</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html">Instruction Tuning</a><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section><section class="nav-section"><h2>Usage</h2><div class="nav-items"><a href="using-leaf.html" aria-current="page" class="active">Applying LEAF to custom EEG data</a></div></section></div>
     <footer><a href="../index.html">← Back to project</a><span>LEAF public release</span></footer>
   </aside>
   <div class="docs-layout">
     <main class="docs-main" id="doc-content">
-      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Using LEAF with New EEG Data</span></nav>
-      <article class="markdown-body"><h1 id="using-leaf-with-new-eeg-data">Using LEAF with New EEG Data</h1>
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Applying LEAF to custom EEG data</span></nav>
+      <article class="markdown-body"><h1 id="applying-leaf-to-custom-eeg-data">Applying LEAF to custom EEG data</h1>
 <p>This example shows how to preprocess a new EEG dataset, align its electrodes with the LEAF montage, extract EEG embeddings, and compare them with text labels. Run the code from the root of the LEAF repository.</p>
 <p>Assume that each trial is four seconds long and was recorded from 32 channels at 250 Hz. The input array has shape <code>(N, 32, 1000)</code>, where <code>N</code> is the number of trials.</p>
 <h2 id="preprocess-and-align-the-channels">Preprocess and align the channels</h2>
@@ -123,7 +123,7 @@
 <p>Each row contains the comparison scores for one EEG trial, and each column corresponds to one candidate label. Replace the instruction and labels with the task of interest. If the required text is not already cached, add it to <code>configs/tasks.yaml</code> and run:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py mpnet-base</span></code></pre></div>
 </article>
-      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="instruction-tuning.html"><span>Previous</span><strong>← Instruction tuning</strong></a><a class="pager-link next" href="direct-inference.html"><span>Next</span><strong>Direct Inference →</strong></a></nav>
+      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="single-dataset-finetuning.html"><span>Previous</span><strong>← Dataset-specific Fine-tuning</strong></a></nav>
     </main>
     <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#preprocess-and-align-the-channels">Preprocess and align the channels</a><a class="toc-level-2" href="#input-length-and-padding">Input length and padding</a><a class="toc-level-2" href="#extract-leaf-embeddings">Extract LEAF embeddings</a><a class="toc-level-2" href="#compare-eeg-with-label-text">Compare EEG with label text</a></nav></aside>
   </div>

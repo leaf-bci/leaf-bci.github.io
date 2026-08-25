@@ -33,14 +33,14 @@ PAGES = [
     Page("datasets/README.md", "datasets/index.html", "Dataset specification", "Datasets", "Dataset Specification"),
     Page("datasets/instruction-tuning-datasets.md", "datasets/instruction-tuning-datasets.html", "Instruction tuning datasets", "Datasets", "Instruction Tuning Datasets"),
     Page("datasets/held-out.md", "datasets/held-out.html", "Held-out datasets", "Datasets", "Held-out Datasets"),
-    Page("pretraining.md", "pretraining.html", "Self-Supervised Pretraining", "Training", "Pretraining"),
-    Page("instruction-tuning.md", "instruction-tuning.html", "Instruction tuning", "Training", "Instruction tuning"),
-    Page("using-leaf.md", "using-leaf.html", "Using LEAF with New EEG Data", "Usage", "Using LEAF with New EEG Data"),
-    Page("direct-inference.md", "direct-inference.html", "Direct inference", "Evaluation", "Direct Inference"),
-    Page("single-dataset-finetuning.md", "single-dataset-finetuning.html", "Dataset-specific fine-tuning with a classification head", "Evaluation", "Dataset-specific Fine-tuning"),
+    Page("pretraining.md", "pretraining.html", "Self-Supervised Pretraining", "Training & Evaluation", "Pretraining"),
+    Page("instruction-tuning.md", "instruction-tuning.html", "Instruction Tuning", "Training & Evaluation", "Instruction Tuning"),
+    Page("direct-inference.md", "direct-inference.html", "Direct inference", "Training & Evaluation", "Direct Inference"),
+    Page("single-dataset-finetuning.md", "single-dataset-finetuning.html", "Dataset-specific fine-tuning with a classification head", "Training & Evaluation", "Dataset-specific Fine-tuning"),
+    Page("using-leaf.md", "using-leaf.html", "Applying LEAF to custom EEG data", "Usage", "Applying LEAF to custom EEG data"),
 ]
 
-GROUP_ORDER = ["Start", "Datasets", "Training", "Usage", "Evaluation"]
+GROUP_ORDER = ["Start", "Datasets", "Training & Evaluation", "Usage"]
 PAGE_BY_SOURCE = {page.source: page for page in PAGES}
 
 

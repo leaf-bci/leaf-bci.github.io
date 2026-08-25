@@ -1,4 +1,4 @@
-# Instruction tuning
+# Instruction Tuning
 
 `b_instruct_tuning.py` aligns EEG with instructions and label text embeddings across every dataset in `configs/tasks.yaml`.
 

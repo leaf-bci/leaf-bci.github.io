@@ -1,4 +1,4 @@
-# Using LEAF with New EEG Data
+# Applying LEAF to custom EEG data
 
 This example shows how to preprocess a new EEG dataset, align its electrodes with the LEAF montage, extract EEG embeddings, and compare them with text labels. Run the code from the root of the LEAF repository.
 
