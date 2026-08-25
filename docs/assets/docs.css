@@ -683,6 +683,57 @@ img {
   border-bottom: 0;
 }
 
+.markdown-body th + th,
+.markdown-body td + td {
+  border-left: 1px solid var(--line);
+}
+
+.markdown-body th[style*="text-align: right"],
+.markdown-body td[style*="text-align: right"] {
+  text-align: left !important;
+}
+
+.markdown-body tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--paper-soft) 55%, transparent);
+}
+
+.table-wrap.compact-table-wrap {
+  width: min(100%, 720px);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.table-wrap.key-value-wrap {
+  width: min(100%, 660px);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.markdown-body .key-value-table {
+  table-layout: fixed;
+}
+
+.markdown-body .key-value-table th:first-child,
+.markdown-body .key-value-table td:first-child {
+  width: 44%;
+}
+
+.markdown-body .key-value-table th:nth-child(2),
+.markdown-body .key-value-table td:nth-child(2) {
+  width: 56%;
+  text-align: left !important;
+}
+
+.markdown-body .key-value-table td:first-child {
+  color: var(--muted);
+  font-weight: 620;
+}
+
+.markdown-body .key-value-table td:nth-child(2) {
+  color: var(--ink-soft);
+  font-weight: 540;
+}
+
 .page-pager {
   display: grid;
   grid-template-columns: 1fr 1fr;

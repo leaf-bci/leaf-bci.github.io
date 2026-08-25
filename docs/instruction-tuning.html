@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#f6f8f7">
   <title>Instruction tuning | LEAF Docs</title>
   <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/docs.css?v=20260825-4">
+  <link rel="stylesheet" href="assets/docs.css?v=20260825-6">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme-v2')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 </head>
 <body data-search-index="search-index.json" data-docs-home="./">
@@ -35,6 +35,10 @@
       <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Instruction tuning</span></nav>
       <article class="markdown-body"><h1 id="instruction-tuning">Instruction tuning</h1>
 <p><code>b_instruct_tuning.py</code> aligns EEG with instructions and label text embeddings across every dataset in <code>configs/tasks.yaml</code>.</p>
+<h2 id="why-align-eeg-with-language">Why align EEG with language?</h2>
+<p>Different BCI datasets describe different prediction problems and use different label spaces. A conventional classifier normally assigns a separate output head to each dataset. LEAF instead represents task instructions, candidate labels, and EEG trials in a shared semantic space.</p>
+<p>This design provides a common interface across heterogeneous tasks. The instruction tells the model what kind of information should be extracted from an EEG trial, while the label embeddings define the possible semantic outputs. After alignment, prediction can be performed by comparing an EEG embedding directly with text-label prototypes.</p>
+<p>Pretraining and instruction tuning are therefore complementary: the pretrained Tower supplies signal structure, and instruction tuning organizes that structure according to task and label meaning.</p>
 <h2 id="inputs">Inputs</h2>
 <ul>
 <li>A pretrained Tower checkpoint, unless <code>--no_warmup</code> is passed.</li>
@@ -45,6 +49,8 @@
 <p>Training uses the training split, validation uses the validation split, and test data remains separate from optimization.</p>
 <h2 id="text-prototypes">Text prototypes</h2>
 <p>All unique label strings across all datasets are sorted alphabetically and assigned a global class index. Their cached normalized embeddings are frozen and stacked into one prototype matrix. Cross-entropy therefore operates over the global unique-label space, not only the current dataset's labels.</p>
+<p>The text encoder is used before training to compute embeddings for every instruction and label. Caching these embeddings avoids repeatedly running the text model and makes the semantic targets consistent throughout instruction tuning. Freezing the prototype matrix gives the EEG model a stable language space to align with.</p>
+<p>A shared label string corresponds to one shared prototype even when it appears in multiple datasets. This encourages compatible semantic concepts to occupy the same location rather than creating a separate class representation for every dataset.</p>
 <h2 id="sample-construction">Sample construction</h2>
 <p>Every trial is padded/cropped to 2,000 samples. Training uses random padding/cropping; validation uses deterministic right padding/leading crop.</p>
 <p>For each sample:</p>
@@ -54,6 +60,24 @@
 <li>Independently, with 90% probability, compute the normalized mean of the dataset's candidate-label embeddings, average it with the instruction embedding, and normalize again.</li>
 <li>Convert the stored integer label to its ordered label string in <code>configs/tasks.yaml</code>, then map that string to the global prototype index.</li>
 </ol>
+<p>Sampling different instruction phrasings exposes the model to multiple natural-language descriptions of the same task and reduces dependence on one fixed prompt. The occasional <code>Default</code> instruction also teaches the model to operate with a generic task description.</p>
+<p>The mean of all candidate-label embeddings summarizes the answer space of a dataset without identifying the correct label for the individual trial. Blending this summary with the instruction gives the conditioning vector both task context and label-space context. Applying the blend probabilistically keeps the model effective with either an instruction alone or the richer combined description.</p>
+<h2 id="how-an-eeg-trial-becomes-a-semantic-embedding">How an EEG trial becomes a semantic embedding</h2>
+<p>The forward path can be summarized as:</p>
+<pre class="text"><code>EEG trial ──&gt; pretrained two-branch Tower ──&gt; EEG tokens ──&gt; FiLM + Q-Former ──&gt; normalized EEG embedding
+                                                    ^                                  |
+                                                    |                                  v
+                                           instruction embedding          cosine similarity
+                                                                                       |
+label text ──&gt; frozen text encoder ──&gt; normalized label prototypes &lt;───────────────────┘</code></pre>
+<p>The process has four steps:</p>
+<ol type="1">
+<li><strong>Encode the EEG.</strong> The pretrained Tower processes the clean trial with its bidirectional and causal branches, then concatenates their token sequences.</li>
+<li><strong>Condition the tokens.</strong> A linear layer maps the instruction embedding to FiLM scale and shift parameters. These parameters modulate every Tower token, allowing the same EEG features to be viewed differently for motor imagery, emotion, speech, SSVEP, workload, or healthcare tasks.</li>
+<li><strong>Summarize task-relevant information.</strong> Eight learned Q-Former queries attend to the instruction-conditioned EEG tokens through four layers of self-attention, cross-attention, and feed-forward processing. The queries provide a fixed-size semantic summary even when the number of EEG windows varies.</li>
+<li><strong>Project into text space.</strong> The final query states are flattened, projected to the dimension of the selected text encoder, and L2-normalized. The result can then be compared directly with normalized label embeddings.</li>
+</ol>
+<p>FiLM provides early task conditioning at the token level, while the Q-Former acts as a compact information bottleneck that selects and aggregates EEG evidence relevant to the instruction.</p>
 <h2 id="optimization">Optimization</h2>
 <p>The pretrained Tower is not frozen. The full LEAF model is trained end to end.</p>
 <table>
@@ -77,7 +101,9 @@
 </tr>
 </tbody>
 </table>
-<p>The loss is cross-entropy over cosine-similarity logits between normalized EEG embeddings and frozen normalized text prototypes.</p>
+<p>The loss is cross-entropy over cosine-similarity logits between normalized EEG embeddings and frozen normalized text prototypes. Because both sides are normalized, their dot product measures angular similarity rather than vector magnitude. Cross-entropy increases similarity to the correct label prototype while decreasing relative similarity to competing prototypes.</p>
+<p>The Tower remains trainable so that its EEG features can adapt to the multi-dataset semantic objective. A larger learning rate is assigned to the tokenizer, while the pretrained Transformer branches and Q-Former use a smaller rate. This lets the signal front end adapt efficiently to the combined downstream corpus while updating the higher-level representation more gradually.</p>
+<p>At the end of instruction tuning, LEAF has learned a mapping conditioned on both the EEG trial and the instruction. Direct inference can then replace a dataset-specific classifier with a set of label text prototypes and select the label with the highest similarity.</p>
 <h2 id="default-hyperparameters">Default hyperparameters</h2>
 <table>
 <thead>
@@ -145,17 +171,26 @@
 </tr>
 </tbody>
 </table>
-<p>No gradient clipping or gradient accumulation is configured. Multiple GPUs use DDP with <code>find_unused_parameters=True</code>.</p>
+<h2 id="practical-considerations">Practical considerations</h2>
+<ul>
+<li><strong>Match the text cache to the model configuration.</strong> <code>text_emb_model_name</code> determines both the cached embedding file and its dimensionality. A checkpoint trained with MPNet should be used with the corresponding MPNet configuration and text cache; the same rule applies to other text encoders.</li>
+<li><strong>Keep label order synchronized.</strong> Integer labels stored in each HDF5 file are interpreted according to the ordered label list in <code>configs/tasks.yaml</code>. Update and regenerate the text cache whenever labels or instruction strings change.</li>
+<li><strong>Use the correct checkpoint type.</strong> EEG pretraining produces a Tower-only checkpoint for <code>--pretrain_ckpt</code>, whereas instruction tuning produces a full LEAF checkpoint for direct inference and downstream evaluation.</li>
+<li><strong>Prefer a pretrained initialization for the standard workflow.</strong> <code>--no_warmup</code> is useful for controlled comparisons, while the released training recipe initializes the Tower from EEG pretraining.</li>
+<li><strong>Interpret batch size per device.</strong> With multiple entries in <code>--gpu</code>, <code>--bs</code> applies to each GPU. Keep the effective batch size in mind when changing the number of devices or comparing experiments.</li>
+<li><strong>Preserve the input convention.</strong> Instruction tuning expects the same 65-channel montage and 200 Hz sampling rate used during pretraining. Trials are standardized to the configured maximum length before entering the model.</li>
+<li><strong>Record the semantic setup.</strong> For a reproducible run, keep the task YAML, text-embedding model, pretrained checkpoint, seed, and instruction-tuning configuration together.</li>
+</ul>
 <h2 id="commands">Commands</h2>
 <p>Warm-start from the pretrained Tower:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> b_instruct_tuning.py <span class="dt">\</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--config</span> configs/LEAF_mpnet.yaml <span class="dt">\</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--gpu</span> 0,1,2,3 <span class="dt">\</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bs</span> 256 <span class="dt">\</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--seed</span> 42 <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pretrain_ckpt</span> checkpoints/leaf-pretrain-epoch-10.ckpt</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> b_instruct_tuning.py <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--config</span> configs/LEAF_mpnet.yaml <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--gpu</span> 0,1,2,3 <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bs</span> 256 <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--seed</span> 42 <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pretrain_ckpt</span> checkpoints/leaf-pretrain-epoch-10.ckpt</span></code></pre></div>
 <p>Train the full model without the pretrained Tower:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> b_instruct_tuning.py <span class="at">--no_warmup</span> <span class="at">--gpu</span> 0 <span class="at">--seed</span> 42</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> b_instruct_tuning.py <span class="at">--no_warmup</span> <span class="at">--gpu</span> 0 <span class="at">--seed</span> 42</span></code></pre></div>
 <p>Use a different registered text encoder with <code>--emb</code>, or select <code>configs/LEAF_qwen3-4b.yaml</code>.</p>
 <h2 id="checkpoint-paths">Checkpoint paths</h2>
 <p>Run directories encode the config name, instruction-tuning seed, and selected pretraining checkpoint. For example, MPNet with seed 0 initialized from epoch 5 writes:</p>
@@ -195,8 +230,8 @@
 </tbody>
 </table>
 <p>Use the short name when generating a cache:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py mpnet-base</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py qwen3-4b</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py mpnet-base</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py qwen3-4b</span></code></pre></div>
 <p>Each cache is a paired text file and NumPy array:</p>
 <pre class="text"><code>text_embeddings/&lt;model&gt;.txt
 text_embeddings/&lt;model&gt;.npy    # (number_of_strings, embedding_dimension)</code></pre>
@@ -204,8 +239,8 @@ text_embeddings/&lt;model&gt;.npy    # (number_of_strings, embedding_dimension)<
 </article>
       <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="pretraining.html"><span>Previous</span><strong>← Pretraining</strong></a><a class="pager-link next" href="direct-inference.html"><span>Next</span><strong>Direct Inference →</strong></a></nav>
     </main>
-    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#inputs">Inputs</a><a class="toc-level-2" href="#text-prototypes">Text prototypes</a><a class="toc-level-2" href="#sample-construction">Sample construction</a><a class="toc-level-2" href="#optimization">Optimization</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#commands">Commands</a><a class="toc-level-2" href="#checkpoint-paths">Checkpoint paths</a><a class="toc-level-2" href="#text-embeddings">Text embeddings</a></nav></aside>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#why-align-eeg-with-language">Why align EEG with language?</a><a class="toc-level-2" href="#inputs">Inputs</a><a class="toc-level-2" href="#text-prototypes">Text prototypes</a><a class="toc-level-2" href="#sample-construction">Sample construction</a><a class="toc-level-2" href="#how-an-eeg-trial-becomes-a-semantic-embedding">How an EEG trial becomes a semantic embedding</a><a class="toc-level-2" href="#optimization">Optimization</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#practical-considerations">Practical considerations</a><a class="toc-level-2" href="#commands">Commands</a><a class="toc-level-2" href="#checkpoint-paths">Checkpoint paths</a><a class="toc-level-2" href="#text-embeddings">Text embeddings</a></nav></aside>
   </div>
-  <script src="assets/docs.js?v=20260825-4" defer></script>
+  <script src="assets/docs.js?v=20260825-6" defer></script>
 </body>
 </html>

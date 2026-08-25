@@ -33,7 +33,7 @@ PAGES = [
     Page("datasets/README.md", "datasets/index.html", "Dataset specification", "Datasets", "Dataset Specification"),
     Page("datasets/instruction-tuning-datasets.md", "datasets/instruction-tuning-datasets.html", "Instruction tuning datasets", "Datasets", "Instruction Tuning Datasets"),
     Page("datasets/held-out.md", "datasets/held-out.html", "Held-out datasets", "Datasets", "Held-out Datasets"),
-    Page("pretraining.md", "pretraining.html", "EEG pretraining", "Training", "Pretraining"),
+    Page("pretraining.md", "pretraining.html", "Self-Supervised Pretraining", "Training", "Pretraining"),
     Page("instruction-tuning.md", "instruction-tuning.html", "Instruction tuning", "Training", "Instruction tuning"),
     Page("direct-inference.md", "direct-inference.html", "Direct inference", "Evaluation", "Direct Inference"),
     Page("single-dataset-finetuning.md", "single-dataset-finetuning.html", "Dataset-specific fine-tuning with a classification head", "Evaluation", "Dataset-specific Fine-tuning"),
@@ -187,7 +187,7 @@ def render_page(current: Page, fragment: str) -> str:
   <meta name="theme-color" content="#f6f8f7">
   <title>{html.escape(current.title)} | LEAF Docs</title>
   <link rel="icon" href="{html.escape(favicon)}" type="image/svg+xml">
-  <link rel="stylesheet" href="{html.escape(stylesheet)}?v=20260825-4">
+  <link rel="stylesheet" href="{html.escape(stylesheet)}?v=20260825-6">
   <script>try{{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme-v2')||'light'}}catch(e){{document.documentElement.dataset.theme='light'}}</script>
 </head>
 <body data-search-index="{html.escape(search_index)}" data-docs-home="{html.escape(docs_home)}">
@@ -218,7 +218,7 @@ def render_page(current: Page, fragment: str) -> str:
     </main>
     <aside class="toc-column">{page_toc(headings)}</aside>
   </div>
-  <script src="{html.escape(script)}?v=20260825-4" defer></script>
+  <script src="{html.escape(script)}?v=20260825-6" defer></script>
 </body>
 </html>
 """

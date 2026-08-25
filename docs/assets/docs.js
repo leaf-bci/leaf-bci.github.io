@@ -71,6 +71,19 @@
   document.querySelectorAll('.markdown-body table').forEach((table) => {
     const wrapper = document.createElement('div');
     wrapper.className = 'table-wrap';
+    const headers = [...table.querySelectorAll('thead th')]
+      .map((cell) => cell.textContent.trim().toLowerCase());
+    if (
+      headers.length === 2
+      && ['item', 'parameter'].includes(headers[0])
+      && headers[1] === 'value'
+    ) {
+      table.classList.add('key-value-table');
+      wrapper.classList.add('key-value-wrap');
+    } else if (headers.length <= 3) {
+      table.classList.add('compact-table');
+      wrapper.classList.add('compact-table-wrap');
+    }
     table.parentNode.insertBefore(wrapper, table);
     wrapper.appendChild(table);
   });

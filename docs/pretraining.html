@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="EEG pretraining — LEAF documentation">
+  <meta name="description" content="Self-Supervised Pretraining — LEAF documentation">
   <meta name="theme-color" content="#f6f8f7">
-  <title>EEG pretraining | LEAF Docs</title>
+  <title>Self-Supervised Pretraining | LEAF Docs</title>
   <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/docs.css?v=20260825-4">
+  <link rel="stylesheet" href="assets/docs.css?v=20260825-6">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme-v2')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
 </head>
 <body data-search-index="search-index.json" data-docs-home="./">
@@ -33,9 +33,9 @@
   <div class="docs-layout">
     <main class="docs-main" id="doc-content">
       <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Pretraining</span></nav>
-      <article class="markdown-body"><h1 id="eeg-pretraining">EEG pretraining</h1>
-<p><code>a_pretrain.py</code> trains the two-branch EEG Tower with no labels.</p>
-<h2 id="input-corpus">Input corpus</h2>
+      <article class="markdown-body"><h1 id="self-supervised-pretraining">Self-Supervised Pretraining</h1>
+<p><code>a_pretrain.py</code> trains the two-branch EEG Tower without task labels. The resulting Tower initializes the signal encoder used during instruction tuning.</p>
+<h2 id="input-and-tokenization">Input and tokenization</h2>
 <p>The pretraining root is <code>paths.pretrain</code> in <code>configs/env.yaml</code>. The loader sorts all <code>*.npy</code> files and treats every first-axis item as a trial:</p>
 <pre class="text"><code>file.npy            shape: (number_of_trials, 65, time)
 file.npy[i]         shape: (65, time)</code></pre>
@@ -44,16 +44,17 @@ file.npy[i]         shape: (65, time)</code></pre>
 <li>training: random left/right zero padding or random crop;</li>
 <li>validation: right zero padding or leading crop.</li>
 </ul>
-<h2 id="objective">Objective</h2>
-<p>For every batch:</p>
-<ol type="1">
-<li>Remove one randomly selected 6 Hz frequency band whose lower edge is sampled from 1-50 Hz.</li>
-<li>Tokenize the corrupted EEG into non-overlapping 100-sample windows.</li>
-<li>Mask 50% of tokens in the contextual branch and reconstruct the original waveform with MSE.</li>
-<li>In the causal branch, let state <code>i</code> attend to corrupted windows <code>0..i</code> and predict the clean signal in window <code>i+1</code>. The next-window MSE is computed over the resulting <code>N-1</code> predictions.</li>
-<li>Optimize <code>masked_reconstruction_loss + next_window_reconstruction_loss</code>.</li>
-</ol>
-<p>The causal branch uses a consistent positional-indexing convention during training and inference.</p>
+<p>At 200 Hz, 2,000 samples correspond to 10 seconds. The tokenizer divides each trial into non-overlapping 100-sample windows. A temporal convolution operates within each window, a spatial convolution integrates the 65 channels, and each Tower branch projects the pooled features to 256-dimensional tokens. The default input therefore produces 20 tokens before positional embeddings are added.</p>
+<h2 id="spectral-perturbation">Spectral perturbation</h2>
+<p>Before tokenization, LEAF transforms the EEG into the frequency domain and sets to zero one randomly selected 6 Hz band whose lower edge is sampled from 1-50 Hz. Both reconstruction branches receive the perturbed signal and predict the original clean waveform. This discourages reliance on a single narrow frequency band.</p>
+<h2 id="reconstruction-objectives">Reconstruction objectives</h2>
+<p>The two branches share the tokenizer and positional embeddings but use independent projection layers and Transformers.</p>
+<h3 id="bidirectional-masked-reconstruction">Bidirectional masked reconstruction</h3>
+<p>The contextual branch replaces 50% of its input tokens with a learned mask token. A bidirectional Transformer processes the sequence and decodes it to the complete clean waveform. Mean-squared error is computed against the original trial.</p>
+<h3 id="causal-next-window-reconstruction">Causal next-window reconstruction</h3>
+<p>The temporal branch uses a causal attention mask. At position <code>i</code>, it can attend only to windows <code>0..i</code>, and its representation predicts the clean waveform in window <code>i+1</code>. Mean-squared error is computed over the resulting <code>N-1</code> predictions.</p>
+<h3 id="combined-representation">Combined representation</h3>
+<p>The pretraining loss is the unweighted sum of masked reconstruction and next-window reconstruction. During instruction tuning and inference, the reconstruction heads are omitted; clean EEG is encoded by both Transformer branches and their outputs are concatenated. A default 20-window trial produces 40 Tower tokens for the Q-Former.</p>
 <h2 id="default-hyperparameters">Default hyperparameters</h2>
 <table>
 <thead>
@@ -70,10 +71,6 @@ file.npy[i]         shape: (65, time)</code></pre>
 <tr>
 <td>Epochs</td>
 <td style="text-align: right;">10 (<code>--epochs</code>)</td>
-</tr>
-<tr>
-<td>Base learning rate</td>
-<td style="text-align: right;"><code>1e-6</code></td>
 </tr>
 <tr>
 <td>Tokenizer learning rate</td>
@@ -107,23 +104,14 @@ file.npy[i]         shape: (65, time)</code></pre>
 <td>Seed</td>
 <td style="text-align: right;">42</td>
 </tr>
-<tr>
-<td>Data workers</td>
-<td style="text-align: right;">16</td>
-</tr>
-<tr>
-<td>Training shuffle</td>
-<td style="text-align: right;">yes</td>
-</tr>
-<tr>
-<td><code>drop_last</code></td>
-<td style="text-align: right;">yes for train and validation</td>
-</tr>
 </tbody>
 </table>
-<p>No gradient clipping or gradient accumulation is configured. Lightning checkpointing and logging are disabled.</p>
-<h2 id="multi-gpu-behavior">Multi-GPU behavior</h2>
-<p>Pass a comma-separated GPU list through <code>--gpu</code>. Multiple GPUs use DDP with <code>find_unused_parameters=False</code>. The per-process step count is approximated as <code>len(trainLoader) // number_of_gpus</code> for the learning-rate schedule.</p>
+<h2 id="practical-considerations">Practical considerations</h2>
+<ul>
+<li>Input arrays should follow the 65-channel LEAF montage at 200 Hz, with each trial stored as <code>(65, time)</code>.</li>
+<li><code>--bs</code> is the batch size per GPU. When comparing runs with different GPU counts, account for the resulting effective batch size.</li>
+<li>Pretraining checkpoints contain only the Tower state and are used to initialize <code>b_instruct_tuning.py</code>; direct inference uses a full instruction-tuned LEAF checkpoint.</li>
+</ul>
 <h2 id="command">Command</h2>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> a_pretrain.py <span class="dt">\</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--config</span> configs/LEAF_mpnet.yaml <span class="dt">\</span></span>
@@ -141,8 +129,8 @@ file.npy[i]         shape: (65, time)</code></pre>
 </article>
       <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="datasets/held-out.html"><span>Previous</span><strong>← Held-out Datasets</strong></a><a class="pager-link next" href="instruction-tuning.html"><span>Next</span><strong>Instruction tuning →</strong></a></nav>
     </main>
-    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#input-corpus">Input corpus</a><a class="toc-level-2" href="#objective">Objective</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#multi-gpu-behavior">Multi-GPU behavior</a><a class="toc-level-2" href="#command">Command</a><a class="toc-level-2" href="#outputs">Outputs</a></nav></aside>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#input-and-tokenization">Input and tokenization</a><a class="toc-level-2" href="#spectral-perturbation">Spectral perturbation</a><a class="toc-level-2" href="#reconstruction-objectives">Reconstruction objectives</a><a class="toc-level-3" href="#bidirectional-masked-reconstruction">Bidirectional masked reconstruction</a><a class="toc-level-3" href="#causal-next-window-reconstruction">Causal next-window reconstruction</a><a class="toc-level-3" href="#combined-representation">Combined representation</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#practical-considerations">Practical considerations</a><a class="toc-level-2" href="#command">Command</a><a class="toc-level-2" href="#outputs">Outputs</a></nav></aside>
   </div>
-  <script src="assets/docs.js?v=20260825-4" defer></script>
+  <script src="assets/docs.js?v=20260825-6" defer></script>
 </body>
 </html>
