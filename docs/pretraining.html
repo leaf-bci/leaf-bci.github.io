@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="EEG pretraining — LEAF documentation">
+  <meta name="theme-color" content="#f6f8f7">
+  <title>EEG pretraining | LEAF Docs</title>
+  <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/docs.css?v=20260825-2">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme')||''}catch(e){}</script>
+</head>
+<body data-search-index="search-index.json" data-docs-home="./">
+  <a class="skip-link" href="#doc-content">Skip to content</a>
+  <header class="docs-header">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="docs-sidebar" aria-label="Open documentation navigation"><span></span><span></span><span></span></button>
+    <a class="docs-brand" href="./" aria-label="LEAF documentation home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M31 7C18 8 9 15 9 25c0 5 3 8 8 8 10 0 16-11 14-26Z"/><path d="M11 31c4-8 9-13 17-18"/></svg></span>
+      <span><strong>LEAF</strong><small>Documentation</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="search-box"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search documentation</span><input id="doc-search" type="search" placeholder="Search docs…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd></label>
+      <a class="header-link" href="../index.html">Project <span aria-hidden="true">↗</span></a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">◐</span></button>
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+  </header>
+  <div class="sidebar-backdrop" hidden></div>
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./">Documentation home</a><a href="overview.html">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html" aria-current="page" class="active">Pretraining</a><a href="instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <footer><a href="../index.html">← Back to project</a><span>LEAF public release</span></footer>
+  </aside>
+  <div class="docs-layout">
+    <main class="docs-main" id="doc-content">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Pretraining</span></nav>
+      <article class="markdown-body"><h1 id="eeg-pretraining">EEG pretraining</h1>
+<p><code>a_pretrain.py</code> trains the two-branch EEG Tower with no labels.</p>
+<h2 id="input-corpus">Input corpus</h2>
+<p>The pretraining root is <code>paths.pretrain</code> in <code>configs/env.yaml</code>. The loader sorts all <code>*.npy</code> files and treats every first-axis item as a trial:</p>
+<pre class="text"><code>file.npy            shape: (number_of_trials, 65, time)
+file.npy[i]         shape: (65, time)</code></pre>
+<p>Trials may have variable time length across files. The dataset wrapper converts them to 2,000 samples:</p>
+<ul>
+<li>training: random left/right zero padding or random crop;</li>
+<li>validation: right zero padding or leading crop.</li>
+</ul>
+<p>The public repository does not contain a pretraining-corpus manifest or the assembly script that maps original dataset names to these <code>.npy</code> files. Document that separately when creating a new corpus.</p>
+<h2 id="trainvalidation-split">Train/validation split</h2>
+<p>Files are traversed in sorted filename order, then trials in increasing index order. A single global counter assigns every tenth trial (<code>counter % 10 == 9</code>) to validation; all others are training. This is a deterministic 90/10 trial split, not a subject-level split.</p>
+<h2 id="objective">Objective</h2>
+<p>For every batch:</p>
+<ol type="1">
+<li>Remove one randomly selected 6 Hz frequency band whose lower edge is sampled from 1-50 Hz.</li>
+<li>Tokenize the corrupted EEG into non-overlapping 100-sample windows.</li>
+<li>Mask 50% of tokens in the contextual branch and reconstruct the original waveform with MSE.</li>
+<li>In the causal branch, let state <code>i</code> attend to corrupted windows <code>0..i</code> and predict the clean signal in window <code>i+1</code>. The next-window MSE is computed over the resulting <code>N-1</code> predictions.</li>
+<li>Optimize <code>masked_reconstruction_loss + next_window_reconstruction_loss</code>.</li>
+</ol>
+<p>The causal branch does not prepend a beginning-of-sequence token. Training and inference use the same positional indices, avoiding the former one-position shift between the two paths.</p>
+<p>The same random spectral corruption and masking are also used during validation, so individual validation losses are stochastic.</p>
+<h2 id="default-hyperparameters">Default hyperparameters</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Batch size</td>
+<td style="text-align: right;">512</td>
+</tr>
+<tr>
+<td>Epochs</td>
+<td style="text-align: right;">10 (<code>--epochs</code>)</td>
+</tr>
+<tr>
+<td>Base learning rate</td>
+<td style="text-align: right;"><code>1e-6</code></td>
+</tr>
+<tr>
+<td>Tokenizer learning rate</td>
+<td style="text-align: right;"><code>1e-6</code></td>
+</tr>
+<tr>
+<td>Remaining Tower learning rate</td>
+<td style="text-align: right;"><code>1e-7</code></td>
+</tr>
+<tr>
+<td>Warmup</td>
+<td style="text-align: right;">1 epoch</td>
+</tr>
+<tr>
+<td>Schedule</td>
+<td style="text-align: right;">linear warmup, cosine multiplier 1.0 to 0.1</td>
+</tr>
+<tr>
+<td>Optimizer</td>
+<td style="text-align: right;">AdamW</td>
+</tr>
+<tr>
+<td>AdamW weight decay</td>
+<td style="text-align: right;">framework default (<code>0.01</code> in current PyTorch)</td>
+</tr>
+<tr>
+<td>Precision</td>
+<td style="text-align: right;"><code>bf16-mixed</code></td>
+</tr>
+<tr>
+<td>Seed</td>
+<td style="text-align: right;">42</td>
+</tr>
+<tr>
+<td>Data workers</td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr>
+<td>Training shuffle</td>
+<td style="text-align: right;">yes</td>
+</tr>
+<tr>
+<td><code>drop_last</code></td>
+<td style="text-align: right;">yes for train and validation</td>
+</tr>
+</tbody>
+</table>
+<p>No gradient clipping or gradient accumulation is configured. Lightning checkpointing and logging are disabled.</p>
+<h2 id="multi-gpu-behavior">Multi-GPU behavior</h2>
+<p>Pass a comma-separated GPU list through <code>--gpu</code>. Multiple GPUs use DDP with <code>find_unused_parameters=False</code>. The per-process step count is approximated as <code>len(trainLoader) // number_of_gpus</code> for the learning-rate schedule.</p>
+<h2 id="command">Command</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> a_pretrain.py <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--config</span> configs/LEAF_mpnet.yaml <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--gpu</span> 0 <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bs</span> 512 <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--epochs</span> 10 <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--seed</span> 42</span></code></pre></div>
+<h2 id="outputs">Outputs</h2>
+<p>Pretraining writes selected per-epoch Tower state dictionaries and one validation-loss array:</p>
+<pre class="text"><code>checkpoints/
+  leaf-pretrain-epoch-05.ckpt
+  leaf-pretrain-epoch-10.ckpt
+  leaf-pretrain-loss.npy</code></pre>
+<p>The checkpoints are raw Tower state dictionaries. <code>leaf-pretrain-loss.npy</code> stores one <code>[masked_reconstruction_loss, next_window_reconstruction_loss]</code> pair per completed validation epoch. If this loss file already exists, pretraining exits without running. A run shorter than a configured save epoch does not write a checkpoint at that epoch.</p>
+</article>
+      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="datasets/held-out.html"><span>Previous</span><strong>← Held-out Datasets</strong></a><a class="pager-link next" href="instruction-tuning.html"><span>Next</span><strong>Instruction tuning →</strong></a></nav>
+    </main>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#input-corpus">Input corpus</a><a class="toc-level-2" href="#trainvalidation-split">Train/validation split</a><a class="toc-level-2" href="#objective">Objective</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#multi-gpu-behavior">Multi-GPU behavior</a><a class="toc-level-2" href="#command">Command</a><a class="toc-level-2" href="#outputs">Outputs</a></nav></aside>
+  </div>
+  <script src="assets/docs.js?v=20260825-2" defer></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LEAF Documentation — LEAF documentation">
+  <meta name="theme-color" content="#f6f8f7">
+  <title>LEAF Documentation | LEAF Docs</title>
+  <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/docs.css?v=20260825-2">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme')||''}catch(e){}</script>
+</head>
+<body data-search-index="search-index.json" data-docs-home="./">
+  <a class="skip-link" href="#doc-content">Skip to content</a>
+  <header class="docs-header">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="docs-sidebar" aria-label="Open documentation navigation"><span></span><span></span><span></span></button>
+    <a class="docs-brand" href="./" aria-label="LEAF documentation home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M31 7C18 8 9 15 9 25c0 5 3 8 8 8 10 0 16-11 14-26Z"/><path d="M11 31c4-8 9-13 17-18"/></svg></span>
+      <span><strong>LEAF</strong><small>Documentation</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="search-box"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search documentation</span><input id="doc-search" type="search" placeholder="Search docs…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd></label>
+      <a class="header-link" href="../index.html">Project <span aria-hidden="true">↗</span></a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">◐</span></button>
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+  </header>
+  <div class="sidebar-backdrop" hidden></div>
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./" aria-current="page" class="active">Documentation home</a><a href="overview.html">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <footer><a href="../index.html">← Back to project</a><span>LEAF public release</span></footer>
+  </aside>
+  <div class="docs-layout">
+    <main class="docs-main" id="doc-content">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a></nav>
+      <article class="markdown-body"><h1 id="leaf-documentation">LEAF documentation</h1>
+<p>This directory documents the public LEAF code release as it is implemented in the repository. Configuration files and source code remain the source of truth; paths, datasets, and hyperparameters may change after the documentation is written.</p>
+<h2 id="start-here">Start here</h2>
+<ul>
+<li><a href="overview.html">Project overview, architecture, and configuration</a></li>
+<li><a href="datasets/">Dataset Specification</a></li>
+</ul>
+<h2 id="training-and-evaluation">Training and evaluation</h2>
+<ul>
+<li><a href="pretraining.html">EEG pretraining</a></li>
+<li><a href="instruction-tuning.html">Instruction tuning and text embeddings</a></li>
+<li><a href="direct-inference.html">Direct inference</a></li>
+<li><a href="single-dataset-finetuning.html">Dataset-specific fine-tuning with a classification head</a></li>
+</ul>
+<h2 id="dataset-preprocessing">Dataset preprocessing</h2>
+<ul>
+<li><a href="datasets/instruction-tuning-datasets.html">Instruction tuning datasets</a></li>
+<li><a href="datasets/held-out.html">Held-out datasets</a></li>
+</ul>
+<h2 id="scope">Scope</h2>
+<p>The current <code>configs/tasks.yaml</code> registers 17 datasets for instruction tuning and standard evaluation. SSVEP, covert speech, workload, and ADHD are part of this suite. Weibo2014 and Dreyer2023 are excluded from instruction tuning and reserved for held-out zero-shot evaluation. The pretraining loader consumes a separate directory of <code>.npy</code> arrays; this release does not include a manifest that identifies the original datasets used to construct that pretraining corpus.</p>
+</article>
+      <nav class="page-pager" aria-label="Documentation pages"><span class="pager-spacer"></span><a class="pager-link next" href="overview.html"><span>Next</span><strong>Overview →</strong></a></nav>
+    </main>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#start-here">Start here</a><a class="toc-level-2" href="#training-and-evaluation">Training and evaluation</a><a class="toc-level-2" href="#dataset-preprocessing">Dataset preprocessing</a><a class="toc-level-2" href="#scope">Scope</a></nav></aside>
+  </div>
+  <script src="assets/docs.js?v=20260825-2" defer></script>
+</body>
+</html>

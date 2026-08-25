@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Instruction tuning — LEAF documentation">
+  <meta name="theme-color" content="#f6f8f7">
+  <title>Instruction tuning | LEAF Docs</title>
+  <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/docs.css?v=20260825-2">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme')||''}catch(e){}</script>
+</head>
+<body data-search-index="search-index.json" data-docs-home="./">
+  <a class="skip-link" href="#doc-content">Skip to content</a>
+  <header class="docs-header">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="docs-sidebar" aria-label="Open documentation navigation"><span></span><span></span><span></span></button>
+    <a class="docs-brand" href="./" aria-label="LEAF documentation home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M31 7C18 8 9 15 9 25c0 5 3 8 8 8 10 0 16-11 14-26Z"/><path d="M11 31c4-8 9-13 17-18"/></svg></span>
+      <span><strong>LEAF</strong><small>Documentation</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="search-box"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search documentation</span><input id="doc-search" type="search" placeholder="Search docs…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd></label>
+      <a class="header-link" href="../index.html">Project <span aria-hidden="true">↗</span></a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">◐</span></button>
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+  </header>
+  <div class="sidebar-backdrop" hidden></div>
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./">Documentation home</a><a href="overview.html">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html" aria-current="page" class="active">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <footer><a href="../index.html">← Back to project</a><span>LEAF public release</span></footer>
+  </aside>
+  <div class="docs-layout">
+    <main class="docs-main" id="doc-content">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Instruction tuning</span></nav>
+      <article class="markdown-body"><h1 id="instruction-tuning">Instruction tuning</h1>
+<p><code>b_instruct_tuning.py</code> aligns EEG with instructions and label text embeddings across every dataset in <code>configs/tasks.yaml</code>.</p>
+<h2 id="inputs">Inputs</h2>
+<ul>
+<li>A pretrained Tower checkpoint, unless <code>--no_warmup</code> is passed.</li>
+<li>All 17 processed downstream HDF5 files.</li>
+<li>A cached text-embedding pair for the configured model.</li>
+<li>Dataset labels and instruction pools from <code>configs/tasks.yaml</code>.</li>
+</ul>
+<p>Test splits are loaded only to be discarded during tuning. Training uses the training split, and validation uses the validation split.</p>
+<h2 id="text-prototypes">Text prototypes</h2>
+<p>All unique label strings across all datasets are sorted alphabetically and assigned a global class index. Their cached normalized embeddings are frozen and stacked into one prototype matrix. Cross-entropy therefore operates over the global unique-label space, not only the current dataset's labels.</p>
+<h2 id="sample-construction">Sample construction</h2>
+<p>Every trial is padded/cropped to 2,000 samples. Training uses random padding/cropping; validation uses deterministic right padding/leading crop.</p>
+<p>For each sample:</p>
+<ol type="1">
+<li>With 10% probability, select a <code>Default</code> instruction.</li>
+<li>Otherwise select a random instruction from the dataset's task family.</li>
+<li>Independently, with 90% probability, compute the normalized mean of the dataset's candidate-label embeddings, average it with the instruction embedding, and normalize again.</li>
+<li>Convert the stored integer label to its ordered label string in <code>configs/tasks.yaml</code>, then map that string to the global prototype index.</li>
+</ol>
+<p>Instruction selection and label-aware blending remain random in the validation dataset; the <code>training</code> flag controls only signal padding/cropping.</p>
+<h2 id="optimization">Optimization</h2>
+<p>The pretrained Tower is not frozen. The full LEAF model is trained end to end.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter group</th>
+<th>Components</th>
+<th style="text-align: right;">Default LR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fast</td>
+<td>Tower tokenizer</td>
+<td style="text-align: right;"><code>1e-3</code></td>
+</tr>
+<tr>
+<td>Slow</td>
+<td>all other Tower and Q-Former parameters</td>
+<td style="text-align: right;"><code>2e-4</code></td>
+</tr>
+</tbody>
+</table>
+<p>The loss is cross-entropy over cosine-similarity logits between normalized EEG embeddings and frozen normalized text prototypes.</p>
+<h2 id="default-hyperparameters">Default hyperparameters</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Batch size</td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>Epochs</td>
+<td style="text-align: right;">100</td>
+</tr>
+<tr>
+<td>Base learning rate</td>
+<td style="text-align: right;"><code>1e-3</code></td>
+</tr>
+<tr>
+<td>Fast LR scale</td>
+<td style="text-align: right;">1.0</td>
+</tr>
+<tr>
+<td>Slow LR scale</td>
+<td style="text-align: right;">0.2</td>
+</tr>
+<tr>
+<td>AdamW weight decay</td>
+<td style="text-align: right;"><code>1e-3</code></td>
+</tr>
+<tr>
+<td>Warmup</td>
+<td style="text-align: right;">2 epochs</td>
+</tr>
+<tr>
+<td>Schedule</td>
+<td style="text-align: right;">linear warmup, cosine multiplier 1.0 to 0.1</td>
+</tr>
+<tr>
+<td>Precision</td>
+<td style="text-align: right;"><code>bf16-mixed</code></td>
+</tr>
+<tr>
+<td>Validation interval</td>
+<td style="text-align: right;">every 10 epochs</td>
+</tr>
+<tr>
+<td>Periodic checkpoint interval</td>
+<td style="text-align: right;">every 10 epochs</td>
+</tr>
+<tr>
+<td>Default seed</td>
+<td style="text-align: right;">42</td>
+</tr>
+<tr>
+<td>Data workers</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>Training shuffle</td>
+<td style="text-align: right;">yes</td>
+</tr>
+</tbody>
+</table>
+<p>No gradient clipping or gradient accumulation is configured. Multiple GPUs use DDP with <code>find_unused_parameters=True</code>.</p>
+<h2 id="commands">Commands</h2>
+<p>Warm-start from the pretrained Tower:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> b_instruct_tuning.py <span class="dt">\</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--config</span> configs/LEAF_mpnet.yaml <span class="dt">\</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--gpu</span> 0,1,2,3 <span class="dt">\</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bs</span> 256 <span class="dt">\</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--seed</span> 42 <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pretrain_ckpt</span> checkpoints/leaf-pretrain-epoch-10.ckpt</span></code></pre></div>
+<p>Train the full model without the pretrained Tower:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> b_instruct_tuning.py <span class="at">--no_warmup</span> <span class="at">--gpu</span> 0 <span class="at">--seed</span> 42</span></code></pre></div>
+<p>Use a different registered text encoder with <code>--emb</code>, or select <code>configs/LEAF_qwen3-4b.yaml</code>.</p>
+<h2 id="checkpoint-paths">Checkpoint paths</h2>
+<p>Run directories encode the config name, instruction-tuning seed, and selected pretraining checkpoint. For example, MPNet with seed 0 initialized from epoch 5 writes:</p>
+<pre class="text"><code>checkpoints/LEAF_mpnet-0-leaf-pretrain-epoch-05/
+  it010.ckpt
+  it020.ckpt
+  ...
+  it100.ckpt
+  loss_it.npy</code></pre>
+<p>Periodic <code>itNNN.ckpt</code> files contain full LEAF state dictionaries. The save interval comes from <code>instruct.save_ckpt_every_n_epoch</code>; setting it to <code>null</code> or <code>none</code> disables checkpoint saving. The current script does not write a separate final checkpoint. <code>loss_it.npy</code> stores validation <code>[cross_entropy_loss, accuracy]</code> pairs. If this loss file already exists, tuning exits to avoid overwriting the run.</p>
+<h2 id="text-embeddings">Text embeddings</h2>
+<p><code>init_text_embeddings.py</code> caches every unique label and instruction from <code>configs/tasks.yaml</code>. Dataset-script constants such as <code>TEXT_LABELS</code> are not used by the current cache; the strings in the task YAML are authoritative.</p>
+<table>
+<thead>
+<tr>
+<th>Short name</th>
+<th style="text-align: right;">Dimension</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bert-base</code></td>
+<td style="text-align: right;">768</td>
+<td><code>bert-base-uncased</code> CLS embedding</td>
+</tr>
+<tr>
+<td><code>mpnet-base</code></td>
+<td style="text-align: right;">768</td>
+<td><code>all-mpnet-base-v2</code></td>
+</tr>
+<tr>
+<td><code>qwen3-4b</code></td>
+<td style="text-align: right;">2560</td>
+<td><code>Qwen/Qwen3-Embedding-4B</code></td>
+</tr>
+</tbody>
+</table>
+<p>Use the short name when generating a cache:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py mpnet-base</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py qwen3-4b</span></code></pre></div>
+<p>Each cache is a paired text file and NumPy array:</p>
+<pre class="text"><code>text_embeddings/&lt;model&gt;.txt
+text_embeddings/&lt;model&gt;.npy    # (number_of_strings, embedding_dimension)</code></pre>
+<p>Rows correspond by position. Embeddings are stored as normalized float32 vectors, and tuning checks unit norm before building prototypes. Existing cache entries retain their positions; only unseen strings are appended. Delete both cache files and regenerate when strict YAML order/identity is required.</p>
+</article>
+      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="pretraining.html"><span>Previous</span><strong>← Pretraining</strong></a><a class="pager-link next" href="direct-inference.html"><span>Next</span><strong>Direct Inference →</strong></a></nav>
+    </main>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#inputs">Inputs</a><a class="toc-level-2" href="#text-prototypes">Text prototypes</a><a class="toc-level-2" href="#sample-construction">Sample construction</a><a class="toc-level-2" href="#optimization">Optimization</a><a class="toc-level-2" href="#default-hyperparameters">Default hyperparameters</a><a class="toc-level-2" href="#commands">Commands</a><a class="toc-level-2" href="#checkpoint-paths">Checkpoint paths</a><a class="toc-level-2" href="#text-embeddings">Text embeddings</a></nav></aside>
+  </div>
+  <script src="assets/docs.js?v=20260825-2" defer></script>
+</body>
+</html>

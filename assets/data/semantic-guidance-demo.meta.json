@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-25T03:23:32.405196+00:00",
+  "generator": "ProjectPage/precompute_projectpage_semantic_demo.py",
+  "checkpoint": {
+    "name": "leaf-v1.0-instruct-mpnet-base.ckpt",
+    "run": "checkpoints",
+    "sha256": "f9ca9cabbd734d2691fa6748adf3e78056f895d4031f7edc481e7d7b6822f3fa"
+  },
+  "config": {
+    "name": "LEAF_mpnet.yaml",
+    "sha256": "c58d2587b5acfd35f71988ca74ae1b257612d26069128c0591dbe2569d8b8291"
+  },
+  "text_embedding_model": "mpnet-base",
+  "seed": 42,
+  "sampling": {
+    "MI_OpenBMI": "all trials from held-out subjects s43-s54",
+    "EMO_SEED_3_seg4": "all trials from predefined test split"
+  },
+  "projection": {
+    "algorithm": "UMAP",
+    "fit": "joint over L0/L1/L2 embeddings and fixed label prototypes, separately per dataset",
+    "metric": "cosine",
+    "n_neighbors": 25,
+    "min_dist": 0.12,
+    "seed": 42
+  },
+  "datasets": {
+    "MI_OpenBMI": {
+      "display_name": "OpenBMI-MI",
+      "split": "test",
+      "full_test_trials": 4800,
+      "selected_trials": 4800,
+      "class_counts": [
+        2400,
+        2400
+      ],
+      "selected_subset_balanced_accuracy": [
+        0.6922916666666667,
+        0.7310416666666667,
+        0.735625
+      ]
+    },
+    "EMO_SEED_3_seg4": {
+      "display_name": "SEED",
+      "split": "test",
+      "full_test_trials": 7620,
+      "selected_trials": 7620,
+      "class_counts": [
+        2310,
+        2640,
+        2670
+      ],
+      "selected_subset_balanced_accuracy": [
+        0.36209689187217275,
+        0.3602457155827943,
+        0.36891345234041867
+      ]
+    }
+  },
+  "privacy": "No raw EEG, subject identifiers, trial identifiers, or 768-D embeddings are exported."
+}

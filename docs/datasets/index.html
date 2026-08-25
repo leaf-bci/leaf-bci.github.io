@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dataset specification — LEAF documentation">
+  <meta name="theme-color" content="#f6f8f7">
+  <title>Dataset specification | LEAF Docs</title>
+  <link rel="icon" href="../../assets/leaf-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/docs.css?v=20260825-2">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme')||''}catch(e){}</script>
+</head>
+<body data-search-index="../search-index.json" data-docs-home="../">
+  <a class="skip-link" href="#doc-content">Skip to content</a>
+  <header class="docs-header">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="docs-sidebar" aria-label="Open documentation navigation"><span></span><span></span><span></span></button>
+    <a class="docs-brand" href="../" aria-label="LEAF documentation home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M31 7C18 8 9 15 9 25c0 5 3 8 8 8 10 0 16-11 14-26Z"/><path d="M11 31c4-8 9-13 17-18"/></svg></span>
+      <span><strong>LEAF</strong><small>Documentation</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="search-box"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search documentation</span><input id="doc-search" type="search" placeholder="Search docs…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd></label>
+      <a class="header-link" href="../../index.html">Project <span aria-hidden="true">↗</span></a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">◐</span></button>
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+  </header>
+  <div class="sidebar-backdrop" hidden></div>
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="../">Documentation home</a><a href="../overview.html">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="./" aria-current="page" class="active">Dataset Specification</a><a href="instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="../pretraining.html">Pretraining</a><a href="../instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="../direct-inference.html">Direct Inference</a><a href="../single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <footer><a href="../../index.html">← Back to project</a><span>LEAF public release</span></footer>
+  </aside>
+  <div class="docs-layout">
+    <main class="docs-main" id="doc-content">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span><span>Dataset Specification</span></nav>
+      <article class="markdown-body"><h1 id="dataset-specification">Dataset Specification</h1>
+<p>The table below reflects <code>configs/tasks.yaml</code> and <code>load_datasets.py</code>, which together define the current instruction-tuning and standard-evaluation suite.</p>
+<h2 id="registered-datasets">Registered datasets</h2>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Dataset key</th>
+<th>Classes in stored-label order</th>
+<th>Subjects/split</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_OpenBMI</code></td>
+<td>Right, Left</td>
+<td>42 train/validation subjects, 12 test subjects</td>
+</tr>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_BCIC_IV2a</code></td>
+<td>Left, Right, Foot, Tongue</td>
+<td>7 train/validation, 2 test</td>
+</tr>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_ShanghaiU</code></td>
+<td>Right, Left</td>
+<td>20 train/validation, 5 test</td>
+</tr>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_BCIC_Upperlimb</code></td>
+<td>Cylin, Sphe, Lumbrical</td>
+<td>11 train/validation, 4 test</td>
+</tr>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_HighGamma</code></td>
+<td>Left, Right</td>
+<td>10 train/validation, 4 test; feet removed at load time</td>
+</tr>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_Cho2017</code></td>
+<td>Left, Right</td>
+<td>40 train/validation, 9 test</td>
+</tr>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_Shin2017A</code></td>
+<td>Left, Right</td>
+<td>22 train/validation, 6 test</td>
+</tr>
+<tr>
+<td>Motor imagery</td>
+<td><code>MI_PhysioNet</code></td>
+<td>Left, Right</td>
+<td>80 train/validation, 29 test</td>
+</tr>
+<tr>
+<td>Emotion</td>
+<td><code>EMO_FACED</code></td>
+<td>9 emotions</td>
+<td>100 train/validation, 23 test</td>
+</tr>
+<tr>
+<td>Emotion</td>
+<td><code>EMO_SEED_3_seg4</code></td>
+<td>Negative, Neutral, Positive</td>
+<td>predefined trial split</td>
+</tr>
+<tr>
+<td>Emotion</td>
+<td><code>EMO_SEED_4_seg4</code></td>
+<td>Neutral, Sad, Fear, Happy</td>
+<td>predefined trial split</td>
+</tr>
+<tr>
+<td>Emotion</td>
+<td><code>EMO_SEED_5_seg4</code></td>
+<td>Disgust, Fear, Sad, Neutral, Happy</td>
+<td>predefined trial split</td>
+</tr>
+<tr>
+<td>Emotion</td>
+<td><code>EMO_SEED_7_seg4</code></td>
+<td>Happy, Surprise, Neutral, Sad, Disgust, Fear, Anger</td>
+<td>predefined trial split</td>
+</tr>
+<tr>
+<td>SSVEP</td>
+<td><code>SSVEP_OpenBMI</code></td>
+<td>12.0, 8.6, 6.6, 5.4 Hz</td>
+<td>42 train/validation, 12 test</td>
+</tr>
+<tr>
+<td>Covert speech</td>
+<td><code>CS_BCIC_Speech</code></td>
+<td>hello, help-me, stop, thank-you, yes</td>
+<td>first 250/next 50/remaining trials per subject</td>
+</tr>
+<tr>
+<td>Workload</td>
+<td><code>Workload</code></td>
+<td>Resting, Workload</td>
+<td>32 train/validation, 4 test</td>
+</tr>
+<tr>
+<td>Healthcare</td>
+<td><code>ADHD_AliMotie</code></td>
+<td>Healthy, ADHD</td>
+<td>predefined subject split</td>
+</tr>
+</tbody>
+</table>
+<p>For subject-based train/validation groups, <code>load_dataset</code> concatenates the selected subjects and sends every fifth sample to validation. Training and validation therefore share subjects, while the test subjects are held out.</p>
+<h2 id="held-out-datasets-not-registered-for-instruction-tuning">Held-out datasets not registered for instruction tuning</h2>
+<ul>
+<li><code>MI_Weibo2014.py</code>: held-out binary motor-imagery evaluation.</li>
+<li><code>MI_Dreyer2023.py</code>: validator/loader for an externally preprocessed held-out file.</li>
+</ul>
+<p>See <a href="held-out.html">held-out zero-shot datasets</a> for details.</p>
+<h2 id="file-naming-requirements">File naming requirements</h2>
+<p><code>load_datasets.py</code> resolves exactly <code>paths.downstream/&lt;dataset-key&gt;.h5</code>. Several builders currently produce a different filename:</p>
+<table>
+<thead>
+<tr>
+<th>Builder output</th>
+<th>Loader expects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EMO_FACED_seg10.h5</code></td>
+<td><code>EMO_FACED.h5</code></td>
+</tr>
+<tr>
+<td><code>EMO_SEED_3_seg4_v2.h5</code></td>
+<td><code>EMO_SEED_3_seg4.h5</code></td>
+</tr>
+<tr>
+<td><code>EMO_SEED_4_seg4_v2.h5</code></td>
+<td><code>EMO_SEED_4_seg4.h5</code></td>
+</tr>
+<tr>
+<td><code>EMO_SEED_5_seg4_v2.h5</code></td>
+<td><code>EMO_SEED_5_seg4.h5</code></td>
+</tr>
+<tr>
+<td><code>EMO_SEED_7_seg4_v2.h5</code></td>
+<td><code>EMO_SEED_7_seg4.h5</code></td>
+</tr>
+</tbody>
+</table>
+<p>Rename or copy these outputs to the expected names before training. This is a description of the current code, not an additional preprocessing step from the method.</p>
+<h2 id="detailed-preprocessing">Detailed preprocessing</h2>
+<ul>
+<li><a href="instruction-tuning-datasets.html">Instruction tuning datasets</a></li>
+<li><a href="held-out.html">Held-out datasets</a></li>
+</ul>
+<h2 id="common-data-format-and-preprocessing">Common data format and preprocessing</h2>
+<p>Signals use <code>(trials, channels, time)</code>, are normally stored as <code>float32</code>, resampled to 200 Hz, and mapped to the 65-channel LEAF montage. Most decoding trials are 4 seconds/800 samples; FACED and ADHD use 10 seconds/2,000 samples.</p>
+<p>After dataset-specific filtering and epoching, <code>leaf_datasets/shared.py::pipeline</code>:</p>
+<ol type="1">
+<li>clips values to the global 0.1/99.9 percentiles of the provided array;</li>
+<li>applies global robust scaling <code>(X - median) / (q75 - q25)</code>;</li>
+<li>maps channel aliases to the 65-channel template;</li>
+<li>averages multiple source channels mapped to one template electrode;</li>
+<li>interpolates missing template electrodes with MNE and warns when more than half are missing.</li>
+</ol>
+<p>The statistics are calculated over the full array passed to <code>pipeline</code>, not per trial or channel. Subject-keyed builders normally call it once per subject; predefined-split builders call it separately per subject and split.</p>
+<p>General EEG builders use a 0.1-70 Hz band, while motor-imagery builders use 0.3-40 Hz. Notch filtering is dataset-specific. The shared pipeline itself does not filter or resample.</p>
+<h3 id="hdf5-layouts">HDF5 layouts</h3>
+<p>Most datasets are subject-keyed:</p>
+<pre class="text"><code>&lt;subject&gt;/X    (trials, 65, time)
+&lt;subject&gt;/Y    (trials,)</code></pre>
+<p>SEED variants and ADHD use flat predefined arrays: <code>trainX/trainY</code>, <code>validX/validY</code>, and <code>testX/testY</code>. Subject-index splitting depends on top-level HDF5 key order.</p>
+<p>Pretraining is separate: <code>a_pretrain.py</code> scans <code>paths.pretrain/*.npy</code>, where each file must be shaped <code>(trials, 65, time)</code>.</p>
+<p>During pretraining and instruction tuning, samples are normalized to 2,000 time points. Training uses random zero-padding placement or random cropping; validation uses right padding or the leading crop. Direct inference and downstream tuning use native trial lengths.</p>
+</article>
+      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="../overview.html"><span>Previous</span><strong>← Overview</strong></a><a class="pager-link next" href="instruction-tuning-datasets.html"><span>Next</span><strong>Instruction Tuning Datasets →</strong></a></nav>
+    </main>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#registered-datasets">Registered datasets</a><a class="toc-level-2" href="#held-out-datasets-not-registered-for-instruction-tuning">Held-out datasets not registered for instruction tuning</a><a class="toc-level-2" href="#file-naming-requirements">File naming requirements</a><a class="toc-level-2" href="#detailed-preprocessing">Detailed preprocessing</a><a class="toc-level-2" href="#common-data-format-and-preprocessing">Common data format and preprocessing</a><a class="toc-level-3" href="#hdf5-layouts">HDF5 layouts</a></nav></aside>
+  </div>
+  <script src="../assets/docs.js?v=20260825-2" defer></script>
+</body>
+</html>

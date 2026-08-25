@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Held-out datasets — LEAF documentation">
+  <meta name="theme-color" content="#f6f8f7">
+  <title>Held-out datasets | LEAF Docs</title>
+  <link rel="icon" href="../../assets/leaf-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/docs.css?v=20260825-2">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme')||''}catch(e){}</script>
+</head>
+<body data-search-index="../search-index.json" data-docs-home="../">
+  <a class="skip-link" href="#doc-content">Skip to content</a>
+  <header class="docs-header">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="docs-sidebar" aria-label="Open documentation navigation"><span></span><span></span><span></span></button>
+    <a class="docs-brand" href="../" aria-label="LEAF documentation home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M31 7C18 8 9 15 9 25c0 5 3 8 8 8 10 0 16-11 14-26Z"/><path d="M11 31c4-8 9-13 17-18"/></svg></span>
+      <span><strong>LEAF</strong><small>Documentation</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="search-box"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search documentation</span><input id="doc-search" type="search" placeholder="Search docs…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd></label>
+      <a class="header-link" href="../../index.html">Project <span aria-hidden="true">↗</span></a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">◐</span></button>
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+  </header>
+  <div class="sidebar-backdrop" hidden></div>
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="../">Documentation home</a><a href="../overview.html">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="./">Dataset Specification</a><a href="instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="held-out.html" aria-current="page" class="active">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="../pretraining.html">Pretraining</a><a href="../instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="../direct-inference.html">Direct Inference</a><a href="../single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <footer><a href="../../index.html">← Back to project</a><span>LEAF public release</span></footer>
+  </aside>
+  <div class="docs-layout">
+    <main class="docs-main" id="doc-content">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../">Docs</a><span aria-hidden="true">/</span><a href="./">Datasets</a><span aria-hidden="true">/</span><span>Held-out Datasets</span></nav>
+      <article class="markdown-body"><h1 id="held-out-datasets">Held-out datasets</h1>
+<p>These motor-imagery datasets are excluded from <code>configs/tasks.yaml</code> and never appear in instruction tuning. They are reserved for zero-shot evaluation with the frozen instruction-tuned LEAF model.</p>
+<h2 id="mi_weibo2014">MI_Weibo2014</h2>
+<ul>
+<li><strong>Role:</strong> held-out binary motor-imagery evaluation with 10 subjects.</li>
+<li><strong>Preprocessing:</strong> read exported <code>.npz</code> files, keep only event codes 1/2 for left/right hand, convert them to labels 0/1, band-pass filter at 0.3-40 Hz, resample to 200 Hz when necessary, and apply the shared pipeline.</li>
+<li><strong>Paths:</strong> the builder uses hard-coded <code>/media/datasets/EEG_Dataset</code> and <code>/media/public/LEAF</code> paths rather than <code>configs/env.yaml</code>.</li>
+<li><strong>Evaluation loading:</strong> <code>zero_shot_heldout.py</code> concatenates all subjects unless exclusions are supplied and treats <code>0=Left</code>, <code>1=Right</code> as verified.</li>
+</ul>
+<h2 id="mi_dreyer2023">MI_Dreyer2023</h2>
+<ul>
+<li><strong>Role:</strong> held-out binary motor-imagery evaluation from an externally preprocessed file; no raw-data preprocessing is included.</li>
+<li><strong>Expected input:</strong> <code>/media/public/LEAF/MI_Dreyer2023.h5</code> with nested <code>train/X,Y</code>, <code>val/X,Y</code>, and <code>test/X,Y</code> groups.</li>
+<li><strong>Expected shapes:</strong> 10,000/2,152/2,160 trials with shape <code>(N, 65, 801)</code>; evaluation keeps the first 800 samples.</li>
+<li><strong>Label mapping:</strong> the delivered file has no label legend, so evaluation assumes <code>0=Left</code>, <code>1=Right</code>.</li>
+<li><strong>Compatibility:</strong> it is not compatible with the standard loader without changes to path, layout, and task registration.</li>
+</ul>
+<h2 id="zero-shot-evaluation">Zero-shot evaluation</h2>
+<p><code>zero_shot_heldout.py</code> evaluates Dreyer2023 and Weibo2014 with frozen MPNet or Qwen3 LEAF checkpoints at instruction levels 0, 1, and 2. It uses only the Left and Right text prototypes and reports balanced accuracy, Cohen's kappa, weighted F1, AUROC, confusion counts, and label-mapping provenance.</p>
+</article>
+      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="instruction-tuning-datasets.html"><span>Previous</span><strong>← Instruction Tuning Datasets</strong></a><a class="pager-link next" href="../pretraining.html"><span>Next</span><strong>Pretraining →</strong></a></nav>
+    </main>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#mi_weibo2014">MI_Weibo2014</a><a class="toc-level-2" href="#mi_dreyer2023">MI_Dreyer2023</a><a class="toc-level-2" href="#zero-shot-evaluation">Zero-shot evaluation</a></nav></aside>
+  </div>
+  <script src="../assets/docs.js?v=20260825-2" defer></script>
+</body>
+</html>

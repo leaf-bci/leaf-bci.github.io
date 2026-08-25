@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Direct inference — LEAF documentation">
+  <meta name="theme-color" content="#f6f8f7">
+  <title>Direct inference | LEAF Docs</title>
+  <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/docs.css?v=20260825-2">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme')||''}catch(e){}</script>
+</head>
+<body data-search-index="search-index.json" data-docs-home="./">
+  <a class="skip-link" href="#doc-content">Skip to content</a>
+  <header class="docs-header">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="docs-sidebar" aria-label="Open documentation navigation"><span></span><span></span><span></span></button>
+    <a class="docs-brand" href="./" aria-label="LEAF documentation home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M31 7C18 8 9 15 9 25c0 5 3 8 8 8 10 0 16-11 14-26Z"/><path d="M11 31c4-8 9-13 17-18"/></svg></span>
+      <span><strong>LEAF</strong><small>Documentation</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="search-box"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search documentation</span><input id="doc-search" type="search" placeholder="Search docs…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd></label>
+      <a class="header-link" href="../index.html">Project <span aria-hidden="true">↗</span></a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">◐</span></button>
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+  </header>
+  <div class="sidebar-backdrop" hidden></div>
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./">Documentation home</a><a href="overview.html">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html" aria-current="page" class="active">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <footer><a href="../index.html">← Back to project</a><span>LEAF public release</span></footer>
+  </aside>
+  <div class="docs-layout">
+    <main class="docs-main" id="doc-content">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Direct Inference</span></nav>
+      <article class="markdown-body"><h1 id="direct-inference">Direct inference</h1>
+<p>Direct inference evaluates an instruction-tuned LEAF checkpoint without training a dataset-specific classifier head. Predictions are made by comparing the normalized EEG embedding with frozen text-label prototypes.</p>
+<h2 id="standard-direct-inference">Standard direct inference</h2>
+<p><code>c_inference.py</code> evaluates every dataset registered in <code>configs/tasks.yaml</code>.</p>
+<h3 id="instruction-levels">Instruction levels</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Level</th>
+<th>Instruction embedding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td>random Default string; no label blending</td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>random task-family instruction; no label blending</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>task-family instruction averaged with the normalized mean of candidate-label embeddings, then normalized</td>
+</tr>
+</tbody>
+</table>
+<p>The random instruction choice is seeded by <code>--seed</code>. Each dataset is evaluated against only its own ordered label prototypes.</p>
+<h3 id="metrics-and-outputs">Metrics and outputs</h3>
+<p>The standard script reports pooled-test balanced accuracy and Cohen's kappa. It creates a <code>direct_inference/</code> directory beside the checkpoint supplied through <code>--ckpt</code> and writes one CSV per level. For the public v1.0 checkpoint:</p>
+<pre class="text"><code>checkpoints/direct_inference/leaf-v1.0-instruct-mpnet-base_level0.csv
+checkpoints/direct_inference/leaf-v1.0-instruct-mpnet-base_level1.csv
+checkpoints/direct_inference/leaf-v1.0-instruct-mpnet-base_level2.csv</code></pre>
+<p>Each CSV includes dataset, balanced accuracy, kappa, sample count, and an unweighted mean across datasets.</p>
+<h3 id="command">Command</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> c_inference.py <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--config</span> configs/LEAF_mpnet.yaml <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--gpu</span> 0 <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bs</span> 256 <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--ckpt</span> checkpoints/leaf-v1.0-instruct-mpnet-base.ckpt <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--level</span> 0,1,2 <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--seed</span> 42</span></code></pre></div>
+<p>Checkpoint paths passed through <code>--ckpt</code> must be relative. A bare filename is also searched for under <code>checkpoints/</code>. The model uses the first GPU in <code>--gpu</code>; this script is not distributed. <code>--bs</code> controls the evaluation batch size.</p>
+<h2 id="global-embedding-export">Global embedding export</h2>
+<p><code>export_test_embeddings.py</code> exports normalized EEG embeddings, true labels, predicted labels, label names, instruction text, checkpoint path, and instruction level for each test dataset. It writes one <code>.npz</code> per dataset plus <code>summary.csv</code> under:</p>
+<pre class="text"><code>ckpt/&lt;architecture&gt;/&lt;tuning-run&gt;/global_inference/level&lt;level&gt;/</code></pre>
+<p>It supports a comma-separated dataset subset and resumable output. For inputs longer than 1,000 samples, such as FACED, it caps effective batch size at 64 to reduce CUDA activation pressure.</p>
+<h2 id="held-out-zero-shot-inference">Held-out zero-shot inference</h2>
+<p><code>zero_shot_heldout.py</code> evaluates the frozen model on <code>MI_Dreyer2023</code> and <code>MI_Weibo2014</code>, neither of which appears in instruction tuning. It uses only the Left and Right prototypes and reports balanced accuracy, kappa, weighted F1, AUROC, and confusion counts. See <a href="datasets/held-out.html">held-out datasets</a>.</p>
+</article>
+      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="instruction-tuning.html"><span>Previous</span><strong>← Instruction tuning</strong></a><a class="pager-link next" href="single-dataset-finetuning.html"><span>Next</span><strong>Dataset-specific Fine-tuning →</strong></a></nav>
+    </main>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#standard-direct-inference">Standard direct inference</a><a class="toc-level-3" href="#instruction-levels">Instruction levels</a><a class="toc-level-3" href="#metrics-and-outputs">Metrics and outputs</a><a class="toc-level-3" href="#command">Command</a><a class="toc-level-2" href="#global-embedding-export">Global embedding export</a><a class="toc-level-2" href="#held-out-zero-shot-inference">Held-out zero-shot inference</a></nav></aside>
+  </div>
+  <script src="assets/docs.js?v=20260825-2" defer></script>
+</body>
+</html>
