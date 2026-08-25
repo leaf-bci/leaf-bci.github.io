@@ -188,8 +188,8 @@ def render_page(current: Page, fragment: str) -> str:
   <meta name="theme-color" content="#f6f8f7">
   <title>{html.escape(current.title)} | LEAF Docs</title>
   <link rel="icon" href="{html.escape(favicon)}" type="image/svg+xml">
-  <link rel="stylesheet" href="{html.escape(stylesheet)}?v=20260825-3">
-  <script>try{{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme')||'light'}}catch(e){{document.documentElement.dataset.theme='light'}}</script>
+  <link rel="stylesheet" href="{html.escape(stylesheet)}?v=20260825-4">
+  <script>try{{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme-v2')||'light'}}catch(e){{document.documentElement.dataset.theme='light'}}</script>
 </head>
 <body data-search-index="{html.escape(search_index)}" data-docs-home="{html.escape(docs_home)}">
   <a class="skip-link" href="#doc-content">Skip to content</a>
@@ -219,7 +219,7 @@ def render_page(current: Page, fragment: str) -> str:
     </main>
     <aside class="toc-column">{page_toc(headings)}</aside>
   </div>
-  <script src="{html.escape(script)}?v=20260825-3" defer></script>
+  <script src="{html.escape(script)}?v=20260825-4" defer></script>
 </body>
 </html>
 """

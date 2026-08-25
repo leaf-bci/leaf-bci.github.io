@@ -27,7 +27,7 @@
 
   const preferredTheme = () => {
     try {
-      const saved = localStorage.getItem('leaf-doc-theme');
+      const saved = localStorage.getItem('leaf-doc-theme-v2');
       if (saved) return saved;
     } catch (_) {}
     return 'light';
@@ -36,7 +36,7 @@
   const setTheme = (theme) => {
     root.dataset.theme = theme;
     themeToggle?.setAttribute('aria-label', `Use ${theme === 'dark' ? 'light' : 'dark'} theme`);
-    try { localStorage.setItem('leaf-doc-theme', theme); } catch (_) {}
+    try { localStorage.setItem('leaf-doc-theme-v2', theme); } catch (_) {}
   };
 
   setTheme(root.dataset.theme || preferredTheme());
