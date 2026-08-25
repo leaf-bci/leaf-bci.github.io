@@ -21,7 +21,7 @@
 
 ## Metrics
 
-Each epoch records validation and test balanced accuracy, AUROC, weighted F1, and Cohen's kappa. Multiclass AUROC uses macro one-vs-rest averaging.
+Evaluation metrics include balanced accuracy, AUROC, weighted F1, and Cohen's kappa. Multiclass AUROC uses macro one-vs-rest averaging.
 
 ## Command
 

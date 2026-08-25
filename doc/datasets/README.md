@@ -61,7 +61,7 @@ Most datasets are subject-keyed:
 <subject>/Y    (trials,)
 ```
 
-SEED variants and ADHD use flat predefined arrays: `trainX/trainY`, `validX/validY`, and `testX/testY`. Subject-index splitting depends on top-level HDF5 key order.
+SEED variants and ADHD use flat predefined arrays: `trainX/trainY`, `validX/validY`, and `testX/testY`.
 
 Pretraining is separate: `a_pretrain.py` scans `paths.pretrain/*.npy`, where each file must be shaped `(trials, 65, time)`.
 

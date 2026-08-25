@@ -53,7 +53,7 @@ file.npy[i]         shape: (65, time)</code></pre>
 <li>In the causal branch, let state <code>i</code> attend to corrupted windows <code>0..i</code> and predict the clean signal in window <code>i+1</code>. The next-window MSE is computed over the resulting <code>N-1</code> predictions.</li>
 <li>Optimize <code>masked_reconstruction_loss + next_window_reconstruction_loss</code>.</li>
 </ol>
-<p>The causal branch does not prepend a beginning-of-sequence token. Training and inference use the same positional indices, avoiding the former one-position shift between the two paths.</p>
+<p>The causal branch uses a consistent positional-indexing convention during training and inference.</p>
 <h2 id="default-hyperparameters">Default hyperparameters</h2>
 <table>
 <thead>
@@ -137,7 +137,7 @@ file.npy[i]         shape: (65, time)</code></pre>
   leaf-pretrain-epoch-05.ckpt
   leaf-pretrain-epoch-10.ckpt
   leaf-pretrain-loss.npy</code></pre>
-<p>The checkpoints are raw Tower state dictionaries. <code>leaf-pretrain-loss.npy</code> stores one <code>[masked_reconstruction_loss, next_window_reconstruction_loss]</code> pair per completed validation epoch. If this loss file already exists, pretraining exits without running. A run shorter than a configured save epoch does not write a checkpoint at that epoch.</p>
+<p>The checkpoints are raw Tower state dictionaries. <code>leaf-pretrain-loss.npy</code> stores one <code>[masked_reconstruction_loss, next_window_reconstruction_loss]</code> pair per completed validation epoch.</p>
 </article>
       <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="datasets/held-out.html"><span>Previous</span><strong>← Held-out Datasets</strong></a><a class="pager-link next" href="instruction-tuning.html"><span>Next</span><strong>Instruction tuning →</strong></a></nav>
     </main>

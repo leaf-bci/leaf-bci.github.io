@@ -9,7 +9,7 @@
 - A cached text-embedding pair for the configured model.
 - Dataset labels and instruction pools from `configs/tasks.yaml`.
 
-Test splits are loaded only to be discarded during tuning. Training uses the training split, and validation uses the validation split.
+Training uses the training split, validation uses the validation split, and test data remains separate from optimization.
 
 ## Text prototypes
 
@@ -92,7 +92,7 @@ checkpoints/LEAF_mpnet-0-leaf-pretrain-epoch-05/
   loss_it.npy
 ```
 
-Periodic `itNNN.ckpt` files contain full LEAF state dictionaries. The save interval comes from `instruct.save_ckpt_every_n_epoch`; setting it to `null` or `none` disables checkpoint saving. The current script does not write a separate final checkpoint. `loss_it.npy` stores validation `[cross_entropy_loss, accuracy]` pairs. If this loss file already exists, tuning exits to avoid overwriting the run.
+Periodic `itNNN.ckpt` files contain full LEAF state dictionaries. The save interval is configured through `instruct.save_ckpt_every_n_epoch`. `loss_it.npy` stores validation `[cross_entropy_loss, accuracy]` pairs.
 
 ## Text embeddings
 

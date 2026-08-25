@@ -177,7 +177,7 @@
 <p>Most datasets are subject-keyed:</p>
 <pre class="text"><code>&lt;subject&gt;/X    (trials, 65, time)
 &lt;subject&gt;/Y    (trials,)</code></pre>
-<p>SEED variants and ADHD use flat predefined arrays: <code>trainX/trainY</code>, <code>validX/validY</code>, and <code>testX/testY</code>. Subject-index splitting depends on top-level HDF5 key order.</p>
+<p>SEED variants and ADHD use flat predefined arrays: <code>trainX/trainY</code>, <code>validX/validY</code>, and <code>testX/testY</code>.</p>
 <p>Pretraining is separate: <code>a_pretrain.py</code> scans <code>paths.pretrain/*.npy</code>, where each file must be shaped <code>(trials, 65, time)</code>.</p>
 <p>During pretraining and instruction tuning, samples are normalized to 2,000 time points. Training uses random zero-padding placement or random cropping; validation uses right padding or the leading crop. Direct inference and downstream tuning use native trial lengths.</p>
 </article>

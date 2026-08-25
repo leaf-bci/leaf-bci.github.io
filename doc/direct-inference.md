@@ -40,7 +40,7 @@ python c_inference.py \
   --seed 42
 ```
 
-Checkpoint paths passed through `--ckpt` must be relative. A bare filename is also searched for under `checkpoints/`. The model uses the first GPU in `--gpu`; this script is not distributed. `--bs` controls the evaluation batch size.
+Use `--ckpt` to select the checkpoint, `--gpu` to select the evaluation device, and `--bs` to control the evaluation batch size.
 
 ## Global embedding export
 

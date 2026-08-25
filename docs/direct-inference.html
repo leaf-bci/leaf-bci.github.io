@@ -75,7 +75,7 @@ checkpoints/direct_inference/leaf-v1.0-instruct-mpnet-base_level2.csv</code></pr
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--ckpt</span> checkpoints/leaf-v1.0-instruct-mpnet-base.ckpt <span class="dt">\</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">--level</span> 0,1,2 <span class="dt">\</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">--seed</span> 42</span></code></pre></div>
-<p>Checkpoint paths passed through <code>--ckpt</code> must be relative. A bare filename is also searched for under <code>checkpoints/</code>. The model uses the first GPU in <code>--gpu</code>; this script is not distributed. <code>--bs</code> controls the evaluation batch size.</p>
+<p>Use <code>--ckpt</code> to select the checkpoint, <code>--gpu</code> to select the evaluation device, and <code>--bs</code> to control the evaluation batch size.</p>
 <h2 id="global-embedding-export">Global embedding export</h2>
 <p><code>export_test_embeddings.py</code> exports normalized EEG embeddings, true labels, predicted labels, label names, instruction text, checkpoint path, and instruction level for each test dataset. It writes one <code>.npz</code> per dataset plus <code>summary.csv</code> under:</p>
 <pre class="text"><code>ckpt/&lt;architecture&gt;/&lt;tuning-run&gt;/global_inference/level&lt;level&gt;/</code></pre>

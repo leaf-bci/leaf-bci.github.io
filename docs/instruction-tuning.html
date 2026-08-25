@@ -42,7 +42,7 @@
 <li>A cached text-embedding pair for the configured model.</li>
 <li>Dataset labels and instruction pools from <code>configs/tasks.yaml</code>.</li>
 </ul>
-<p>Test splits are loaded only to be discarded during tuning. Training uses the training split, and validation uses the validation split.</p>
+<p>Training uses the training split, validation uses the validation split, and test data remains separate from optimization.</p>
 <h2 id="text-prototypes">Text prototypes</h2>
 <p>All unique label strings across all datasets are sorted alphabetically and assigned a global class index. Their cached normalized embeddings are frozen and stacked into one prototype matrix. Cross-entropy therefore operates over the global unique-label space, not only the current dataset's labels.</p>
 <h2 id="sample-construction">Sample construction</h2>
@@ -165,7 +165,7 @@
   ...
   it100.ckpt
   loss_it.npy</code></pre>
-<p>Periodic <code>itNNN.ckpt</code> files contain full LEAF state dictionaries. The save interval comes from <code>instruct.save_ckpt_every_n_epoch</code>; setting it to <code>null</code> or <code>none</code> disables checkpoint saving. The current script does not write a separate final checkpoint. <code>loss_it.npy</code> stores validation <code>[cross_entropy_loss, accuracy]</code> pairs. If this loss file already exists, tuning exits to avoid overwriting the run.</p>
+<p>Periodic <code>itNNN.ckpt</code> files contain full LEAF state dictionaries. The save interval is configured through <code>instruct.save_ckpt_every_n_epoch</code>. <code>loss_it.npy</code> stores validation <code>[cross_entropy_loss, accuracy]</code> pairs.</p>
 <h2 id="text-embeddings">Text embeddings</h2>
 <p><code>init_text_embeddings.py</code> caches every unique label and instruction from <code>configs/tasks.yaml</code>. Dataset-script constants such as <code>TEXT_LABELS</code> are not used by the current cache; the strings in the task YAML are authoritative.</p>
 <table>

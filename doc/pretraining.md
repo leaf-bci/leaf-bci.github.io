@@ -26,7 +26,7 @@ For every batch:
 4. In the causal branch, let state `i` attend to corrupted windows `0..i` and predict the clean signal in window `i+1`. The next-window MSE is computed over the resulting `N-1` predictions.
 5. Optimize `masked_reconstruction_loss + next_window_reconstruction_loss`.
 
-The causal branch does not prepend a beginning-of-sequence token. Training and inference use the same positional indices, avoiding the former one-position shift between the two paths.
+The causal branch uses a consistent positional-indexing convention during training and inference.
 
 ## Default hyperparameters
 
@@ -75,4 +75,4 @@ checkpoints/
   leaf-pretrain-loss.npy
 ```
 
-The checkpoints are raw Tower state dictionaries. `leaf-pretrain-loss.npy` stores one `[masked_reconstruction_loss, next_window_reconstruction_loss]` pair per completed validation epoch. If this loss file already exists, pretraining exits without running. A run shorter than a configured save epoch does not write a checkpoint at that epoch.
+The checkpoints are raw Tower state dictionaries. `leaf-pretrain-loss.npy` stores one `[masked_reconstruction_loss, next_window_reconstruction_loss]` pair per completed validation epoch.
