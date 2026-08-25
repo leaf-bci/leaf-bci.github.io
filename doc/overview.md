@@ -1,4 +1,4 @@
-# Project overview
+# Overview
 
 LEAF is a language-aligned EEG foundation model. It first learns EEG structure without labels, then aligns EEG representations with natural-language task descriptions and label prototypes. The aligned model can make predictions by comparing an EEG embedding with frozen text embeddings instead of using a separate classifier head for every task.
 

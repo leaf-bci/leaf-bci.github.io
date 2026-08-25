@@ -29,8 +29,7 @@ class Page:
 
 
 PAGES = [
-    Page("README.md", "index.html", "LEAF Documentation", "Start", "Documentation home"),
-    Page("overview.md", "overview.html", "Project overview", "Start", "Overview"),
+    Page("overview.md", "index.html", "Overview", "Start", "Overview"),
     Page("datasets/README.md", "datasets/index.html", "Dataset specification", "Datasets", "Dataset Specification"),
     Page("datasets/instruction-tuning-datasets.md", "datasets/instruction-tuning-datasets.html", "Instruction tuning datasets", "Datasets", "Instruction Tuning Datasets"),
     Page("datasets/held-out.md", "datasets/held-out.html", "Held-out datasets", "Datasets", "Held-out Datasets"),
@@ -255,6 +254,17 @@ def main() -> None:
 
     (DOCS_ROOT / "search-index.json").write_text(
         json.dumps(search_entries, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
+
+    # Preserve existing links while keeping Overview as the single docs landing page.
+    (DOCS_ROOT / "overview.html").write_text(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<meta http-equiv="refresh" content="0; url=./">'
+        '<link rel="canonical" href="./"><title>LEAF Documentation</title>'
+        '</head><body><p><a href="./">Go to the LEAF documentation overview</a>.</p>'
+        '</body></html>\n',
         encoding="utf-8",
     )
     print(f"Built {len(PAGES)} documentation pages in {DOCS_ROOT}")

@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="LEAF Documentation — LEAF documentation">
+  <meta name="description" content="Overview — LEAF documentation">
   <meta name="theme-color" content="#f6f8f7">
-  <title>LEAF Documentation | LEAF Docs</title>
+  <title>Overview | LEAF Docs</title>
   <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/docs.css?v=20260825-4">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme-v2')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
@@ -27,37 +27,178 @@
   </header>
   <div class="sidebar-backdrop" hidden></div>
   <aside class="docs-sidebar" id="docs-sidebar">
-    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./" aria-current="page" class="active">Documentation home</a><a href="overview.html">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./" aria-current="page" class="active">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
     <footer><a href="../index.html">← Back to project</a><span>LEAF public release</span></footer>
   </aside>
   <div class="docs-layout">
     <main class="docs-main" id="doc-content">
       <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a></nav>
-      <article class="markdown-body"><h1 id="leaf-documentation">LEAF documentation</h1>
-<p>This directory documents the public LEAF code release as it is implemented in the repository. Configuration files and source code remain the source of truth; paths, datasets, and hyperparameters may change after the documentation is written.</p>
-<h2 id="start-here">Start here</h2>
+      <article class="markdown-body"><h1 id="overview">Overview</h1>
+<p>LEAF is a language-aligned EEG foundation model. It first learns EEG structure without labels, then aligns EEG representations with natural-language task descriptions and label prototypes. The aligned model can make predictions by comparing an EEG embedding with frozen text embeddings instead of using a separate classifier head for every task.</p>
+<p><img src="assets/leaf-architecture.png" alt="LEAF architecture" /></p>
+<h2 id="end-to-end-workflow">End-to-end workflow</h2>
+<ol type="1">
+<li><strong>Prepare each downstream dataset.</strong> Dataset-specific scripts read the original files, filter and resample the signals, divide recordings into trials, and write HDF5 files.</li>
+<li><strong>Normalize the electrode space.</strong> The shared preprocessing pipeline clips extreme values, applies robust scaling, maps channel names to the 65-channel LEAF montage, and interpolates missing template channels.</li>
+<li><strong>Prepare the pretraining corpus.</strong> Pretraining expects one or more <code>.npy</code> arrays containing trials shaped <code>(trials, 65, time)</code>.</li>
+<li><strong>Pretrain the EEG Tower.</strong> Spectral perturbation is applied to the input. A bidirectional masked branch and a causal next-window branch reconstruct the original waveform.</li>
+<li><strong>Cache language embeddings.</strong> All target labels and instruction strings are encoded by the selected text model and stored in <code>text_embeddings/</code>.</li>
+<li><strong>Instruction-tune LEAF.</strong> The pretrained Tower and Instruction-conditioned Q-Former are trained jointly. The output EEG embedding is classified against frozen text prototypes using cross-entropy.</li>
+<li><strong>Evaluate or fine-tune.</strong> Direct inference compares EEG and text embeddings without additional training. Dataset-specific fine-tuning adds a task-specific classification head and adapts the model to one selected dataset.</li>
+</ol>
+<h2 id="main-entry-points">Main entry points</h2>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Entry point</th>
+<th>Main input</th>
+<th>Main output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Text cache</td>
+<td><code>init_text_embeddings.py</code></td>
+<td><code>configs/tasks.yaml</code>, text encoder</td>
+<td><code>text_embeddings/&lt;model&gt;.txt/.npy</code></td>
+</tr>
+<tr>
+<td>Pretraining</td>
+<td><code>a_pretrain.py</code></td>
+<td>Pretraining <code>.npy</code> files</td>
+<td>epoch-5/10 Tower checkpoints, <code>leaf-pretrain-loss.npy</code></td>
+</tr>
+<tr>
+<td>Instruction tuning</td>
+<td><code>b_instruct_tuning.py</code></td>
+<td>Downstream HDF5 files, text cache</td>
+<td>periodic <code>itNNN.ckpt</code>, <code>loss_it.npy</code></td>
+</tr>
+<tr>
+<td>Direct evaluation</td>
+<td><code>c_inference.py</code></td>
+<td>tuned checkpoint, test splits</td>
+<td>per-level CSV reports</td>
+</tr>
+<tr>
+<td>Full single-dataset fine-tuning</td>
+<td><code>d_downstream.py</code></td>
+<td>tuned checkpoint, one dataset</td>
+<td>per-epoch validation/test metrics in <code>.npz</code></td>
+</tr>
+<tr>
+<td>Held-out evaluation</td>
+<td><code>zero_shot_heldout.py</code></td>
+<td>Dreyer2023 and Weibo2014 HDF5</td>
+<td>combined zero-shot CSV</td>
+</tr>
+<tr>
+<td>Embedding export</td>
+<td><code>export_test_embeddings.py</code></td>
+<td>tuned checkpoint, test splits</td>
+<td>per-dataset <code>.npz</code> embeddings and summary CSV</td>
+</tr>
+</tbody>
+</table>
+<h2 id="current-dataset-scope">Current dataset scope</h2>
+<p>Instruction tuning uses eight motor-imagery datasets, five emotion datasets, one SSVEP dataset, one covert-speech dataset, one workload dataset, and one ADHD dataset. See the <a href="datasets/">dataset index</a> for the exact labels and split rules.</p>
+<h2 id="important-distinction">Important distinction</h2>
+<p>The downstream HDF5 files and the pretraining <code>.npy</code> corpus are separate products:</p>
 <ul>
-<li><a href="overview.html">Project overview, architecture, and configuration</a></li>
-<li><a href="datasets/">Dataset Specification</a></li>
+<li><code>paths.downstream</code> contains labeled HDF5 datasets used by instruction tuning, inference, and downstream fine-tuning.</li>
+<li><code>paths.pretrain</code> contains unlabeled <code>.npy</code> trial arrays used only by <code>a_pretrain.py</code>.</li>
 </ul>
-<h2 id="training-and-evaluation">Training and evaluation</h2>
+<h2 id="architecture">Architecture</h2>
+<p>The default input convention is 65 channels at 200 Hz, with a maximum instruction-tuning length of 2,000 samples. The tokenizer divides EEG into non-overlapping 100-sample windows and applies a temporal convolution, a spatial convolution across all channels, synchronized batch normalization, GELU, pooling, and dropout.</p>
+<p>The Spectral-Temporal Reconstruction Tower has two independent 12-layer Transformer branches sharing the tokenizer and positional embedding:</p>
 <ul>
-<li><a href="pretraining.html">EEG pretraining</a></li>
-<li><a href="instruction-tuning.html">Instruction tuning and text embeddings</a></li>
-<li><a href="direct-inference.html">Direct inference</a></li>
-<li><a href="single-dataset-finetuning.html">Dataset-specific fine-tuning with a classification head</a></li>
+<li>a bidirectional branch masks 50% of window tokens and reconstructs the original waveform;</li>
+<li>a causal branch uses corrupted windows through position <code>i</code> to predict the clean waveform in the next window, <code>i+1</code>.</li>
 </ul>
-<h2 id="dataset-preprocessing">Dataset preprocessing</h2>
-<ul>
-<li><a href="datasets/instruction-tuning-datasets.html">Instruction tuning datasets</a></li>
-<li><a href="datasets/held-out.html">Held-out datasets</a></li>
-</ul>
-<h2 id="scope">Scope</h2>
-<p>The current <code>configs/tasks.yaml</code> registers 17 datasets for instruction tuning and standard evaluation. SSVEP, covert speech, workload, and ADHD are part of this suite. Weibo2014 and Dreyer2023 are excluded from instruction tuning and reserved for held-out zero-shot evaluation.</p>
+<p>A random 6 Hz band with a lower edge sampled from 1-50 Hz is removed before both reconstruction losses. At inference, the two branch outputs are concatenated, producing 40 tokens for a 10-second trial or 16 tokens for a 4-second trial.</p>
+<p>The Instruction-conditioned Q-Former uses eight learned 256-dimensional queries and four layers. The text instruction modulates Tower tokens through FiLM, after which queries cross-attend to the tokens. Flattened query outputs are projected into the selected text space and L2-normalized. Classification uses cosine-similarity logits against frozen normalized label embeddings.</p>
+<h3 id="default-model-dimensions">Default model dimensions</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sampling rate / channels</td>
+<td style="text-align: right;">200 Hz / 65</td>
+</tr>
+<tr>
+<td>Maximum length</td>
+<td style="text-align: right;">2,000 samples</td>
+</tr>
+<tr>
+<td>Window length</td>
+<td style="text-align: right;">100 samples</td>
+</tr>
+<tr>
+<td>CNN width / token dimension</td>
+<td style="text-align: right;">64 / 256</td>
+</tr>
+<tr>
+<td>Tower layers per branch</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr>
+<td>Attention heads / FF expansion</td>
+<td style="text-align: right;">8 / 4x</td>
+</tr>
+<tr>
+<td>Transformer dropout</td>
+<td style="text-align: right;">0.1</td>
+</tr>
+<tr>
+<td>Q-Former queries / layers</td>
+<td style="text-align: right;">8 / 4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration-files">Configuration files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>configs/LEAF_mpnet.yaml</code></td>
+<td>Model plus pretraining, instruction-tuning, and downstream defaults using MPNet</td>
+</tr>
+<tr>
+<td><code>configs/LEAF_qwen3-4b.yaml</code></td>
+<td>Same defaults using Qwen3-4B text embeddings</td>
+</tr>
+<tr>
+<td><code>configs/env.yaml</code></td>
+<td>Raw, pretraining, and downstream data roots plus text-encoder registry</td>
+</tr>
+<tr>
+<td><code>configs/tasks.yaml</code></td>
+<td>Ordered labels and instruction pools</td>
+</tr>
+<tr>
+<td><code>configs/LEAF-ch65/</code></td>
+<td>Electrode aliases, montage coordinates, and reference PDF</td>
+</tr>
+</tbody>
+</table>
+<p>The model YAMLs currently differ only in <code>text_emb_model_name</code>. <code>--dim</code> can override architecture using <code>window-cnn-token-tower_layers[-queries-qformer_layers]</code>; the default full value is <code>100-64-256-12-8-4</code>. <code>--emb</code> overrides the configured text encoder.</p>
+<p>Label order in <code>configs/tasks.yaml</code> must exactly match integer labels stored in HDF5. Changing any label or instruction requires updating the corresponding text cache.</p>
+<p>Default configuration/task/environment paths are anchored to <code>load_config.py</code>, but CLI defaults and <code>ckpt/</code> outputs are generally relative to the working directory. Run commands from the repository root.</p>
 </article>
-      <nav class="page-pager" aria-label="Documentation pages"><span class="pager-spacer"></span><a class="pager-link next" href="overview.html"><span>Next</span><strong>Overview →</strong></a></nav>
+      <nav class="page-pager" aria-label="Documentation pages"><span class="pager-spacer"></span><a class="pager-link next" href="datasets/"><span>Next</span><strong>Dataset Specification →</strong></a></nav>
     </main>
-    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#start-here">Start here</a><a class="toc-level-2" href="#training-and-evaluation">Training and evaluation</a><a class="toc-level-2" href="#dataset-preprocessing">Dataset preprocessing</a><a class="toc-level-2" href="#scope">Scope</a></nav></aside>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#end-to-end-workflow">End-to-end workflow</a><a class="toc-level-2" href="#main-entry-points">Main entry points</a><a class="toc-level-2" href="#current-dataset-scope">Current dataset scope</a><a class="toc-level-2" href="#important-distinction">Important distinction</a><a class="toc-level-2" href="#architecture">Architecture</a><a class="toc-level-3" href="#default-model-dimensions">Default model dimensions</a><a class="toc-level-2" href="#configuration-files">Configuration files</a></nav></aside>
   </div>
   <script src="assets/docs.js?v=20260825-4" defer></script>
 </body>
