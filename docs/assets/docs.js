@@ -30,7 +30,7 @@
       const saved = localStorage.getItem('leaf-doc-theme');
       if (saved) return saved;
     } catch (_) {}
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'light';
   };
 
   const setTheme = (theme) => {
