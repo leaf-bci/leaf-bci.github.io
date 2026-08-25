@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Using LEAF with New EEG Data — LEAF documentation">
+  <meta name="theme-color" content="#f6f8f7">
+  <title>Using LEAF with New EEG Data | LEAF Docs</title>
+  <link rel="icon" href="../assets/leaf-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/docs.css?v=20260825-6">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('leaf-doc-theme-v2')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
+</head>
+<body data-search-index="search-index.json" data-docs-home="./">
+  <a class="skip-link" href="#doc-content">Skip to content</a>
+  <header class="docs-header">
+    <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="docs-sidebar" aria-label="Open documentation navigation"><span></span><span></span><span></span></button>
+    <a class="docs-brand" href="./" aria-label="LEAF documentation home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M31 7C18 8 9 15 9 25c0 5 3 8 8 8 10 0 16-11 14-26Z"/><path d="M11 31c4-8 9-13 17-18"/></svg></span>
+      <span><strong>LEAF</strong><small>Documentation</small></span>
+    </a>
+    <div class="header-actions">
+      <label class="search-box"><span class="search-icon" aria-hidden="true">⌕</span><span class="sr-only">Search documentation</span><input id="doc-search" type="search" placeholder="Search docs…" autocomplete="off" aria-controls="search-results" aria-expanded="false"><kbd>/</kbd></label>
+      <a class="header-link" href="../index.html">Project <span aria-hidden="true">↗</span></a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme"><span class="theme-icon" aria-hidden="true">◐</span></button>
+    </div>
+    <div class="search-results" id="search-results" hidden></div>
+  </header>
+  <div class="sidebar-backdrop" hidden></div>
+  <aside class="docs-sidebar" id="docs-sidebar">
+    <div class="sidebar-scroll"><section class="nav-section"><h2>Start</h2><div class="nav-items"><a href="./">Overview</a></div></section><section class="nav-section"><h2>Datasets</h2><div class="nav-items"><a href="datasets/">Dataset Specification</a><a href="datasets/instruction-tuning-datasets.html">Instruction Tuning Datasets</a><a href="datasets/held-out.html">Held-out Datasets</a></div></section><section class="nav-section"><h2>Training</h2><div class="nav-items"><a href="pretraining.html">Pretraining</a><a href="instruction-tuning.html">Instruction tuning</a></div></section><section class="nav-section"><h2>Usage</h2><div class="nav-items"><a href="using-leaf.html" aria-current="page" class="active">Using LEAF with New EEG Data</a></div></section><section class="nav-section"><h2>Evaluation</h2><div class="nav-items"><a href="direct-inference.html">Direct Inference</a><a href="single-dataset-finetuning.html">Dataset-specific Fine-tuning</a></div></section></div>
+    <footer><a href="../index.html">← Back to project</a><span>LEAF public release</span></footer>
+  </aside>
+  <div class="docs-layout">
+    <main class="docs-main" id="doc-content">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="./">Docs</a><span aria-hidden="true">/</span><span>Using LEAF with New EEG Data</span></nav>
+      <article class="markdown-body"><h1 id="using-leaf-with-new-eeg-data">Using LEAF with New EEG Data</h1>
+<p>This example shows how to preprocess a new EEG dataset, align its electrodes with the LEAF montage, extract EEG embeddings, and compare them with text labels. Run the code from the root of the LEAF repository.</p>
+<p>Assume that each trial is four seconds long and was recorded from 32 channels at 250 Hz. The input array has shape <code>(N, 32, 1000)</code>, where <code>N</code> is the number of trials.</p>
+<h2 id="preprocess-and-align-the-channels">Preprocess and align the channels</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> mne</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> leaf_datasets.shared <span class="im">import</span> pipeline</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>channels <span class="op">=</span> [</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;Fp1&#39;</span>, <span class="st">&#39;Fp2&#39;</span>, <span class="st">&#39;F7&#39;</span>, <span class="st">&#39;F3&#39;</span>, <span class="st">&#39;Fz&#39;</span>, <span class="st">&#39;F4&#39;</span>, <span class="st">&#39;F8&#39;</span>, <span class="st">&#39;FC5&#39;</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;FC1&#39;</span>, <span class="st">&#39;FC2&#39;</span>, <span class="st">&#39;FC6&#39;</span>, <span class="st">&#39;T7&#39;</span>, <span class="st">&#39;C3&#39;</span>, <span class="st">&#39;Cz&#39;</span>, <span class="st">&#39;C4&#39;</span>, <span class="st">&#39;T8&#39;</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;CP5&#39;</span>, <span class="st">&#39;CP1&#39;</span>, <span class="st">&#39;CP2&#39;</span>, <span class="st">&#39;CP6&#39;</span>, <span class="st">&#39;P7&#39;</span>, <span class="st">&#39;P3&#39;</span>, <span class="st">&#39;Pz&#39;</span>, <span class="st">&#39;P4&#39;</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;P8&#39;</span>, <span class="st">&#39;POz&#39;</span>, <span class="st">&#39;O1&#39;</span>, <span class="st">&#39;Oz&#39;</span>, <span class="st">&#39;O2&#39;</span>, <span class="st">&#39;AF3&#39;</span>, <span class="st">&#39;AF4&#39;</span>, <span class="st">&#39;FCz&#39;</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace this random array with your epoched EEG data.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>raw_eeg <span class="op">=</span> np.random.randn(<span class="dv">2</span>, <span class="dv">32</span>, <span class="dv">1000</span>).astype(np.float32)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>info <span class="op">=</span> mne.create_info(channels, sfreq<span class="op">=</span><span class="dv">250</span>, ch_types<span class="op">=</span><span class="st">&#39;eeg&#39;</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>epochs <span class="op">=</span> mne.EpochsArray(raw_eeg, info, verbose<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>epochs.<span class="bu">filter</span>(l_freq<span class="op">=</span><span class="fl">0.1</span>, h_freq<span class="op">=</span><span class="dv">70</span>, method<span class="op">=</span><span class="st">&#39;iir&#39;</span>, verbose<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>epochs.resample(<span class="dv">200</span>, verbose<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>eeg <span class="op">=</span> pipeline(epochs.get_data().astype(np.float32), channels)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(eeg.shape)  <span class="co"># (2, 65, 800)</span></span></code></pre></div>
+<p><code>pipeline</code> performs three operations:</p>
+<ol type="1">
+<li>It clips values outside the 0.1 and 99.9 percentiles.</li>
+<li>It applies robust scaling using the median and interquartile range computed over the supplied array.</li>
+<li>It maps the named electrodes to the LEAF 65-channel montage and interpolates missing template channels.</li>
+</ol>
+<p>Channel names must match an electrode or alias in <code>configs/LEAF-ch65/LEAF-ch65.json</code>. Add an alias there if a dataset uses a different channel name. Interpolation is intended to align established EEG montages; verify the channel names and electrode positions, and retain as much coverage of the 65-channel template as the recording provides.</p>
+<h2 id="input-length-and-padding">Input length and padding</h2>
+<p>The default LEAF configuration uses a sampling rate of 200 Hz and accepts up to 2,000 samples, or 10 seconds. During pretraining and instruction tuning, shorter trials are zero-padded to 10 seconds and longer trials are cropped. The padding or crop position is randomized for training samples; validation samples are padded on the right or cropped from the beginning.</p>
+<p>Padding to 10 seconds is not required for inference. The four-second example above contains 800 samples and can be passed to LEAF directly. The tokenizer divides it into eight non-overlapping windows of 100 samples. For recordings longer than 10 seconds, crop the signal or divide it into segments before inference.</p>
+<h2 id="extract-leaf-embeddings">Extract LEAF embeddings</h2>
+<p>Download the instruction-tuned checkpoint before running this step. The checkpoint and text-embedding cache must use the same text encoder; the released model below uses MPNet.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> LEAF <span class="im">import</span> LEAF</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> init_text_embeddings <span class="im">import</span> load_embeddings</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> load_config <span class="im">import</span> build_model_config, load_yaml</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> torch.device(<span class="st">&#39;cuda&#39;</span> <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> <span class="st">&#39;cpu&#39;</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> build_model_config(load_yaml(<span class="st">&#39;configs/LEAF_mpnet.yaml&#39;</span>))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> LEAF(config)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> torch.load(</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;checkpoints/leaf-v1.0-instruct-mpnet-base.ckpt&#39;</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    map_location<span class="op">=</span><span class="st">&#39;cpu&#39;</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    weights_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>model.load_state_dict(state, strict<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>model.to(device).<span class="bu">eval</span>()</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>text_embeddings <span class="op">=</span> load_embeddings(config.text_emb_model_name)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>instruction <span class="op">=</span> torch.tensor(</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    text_embeddings[<span class="st">&#39;This is an emotion recognition task&#39;</span>],</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    dtype<span class="op">=</span>torch.float32,</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    device<span class="op">=</span>device,</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> torch.tensor(eeg, dtype<span class="op">=</span>torch.float32, device<span class="op">=</span>device)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>instruction <span class="op">=</span> instruction.unsqueeze(<span class="dv">0</span>).expand(x.shape[<span class="dv">0</span>], <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.inference_mode():</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    eeg_embeddings, _ <span class="op">=</span> model(x, instruction)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(eeg_embeddings.shape)  <span class="co"># (2, 768) with MPNet</span></span></code></pre></div>
+<p>The first output contains one L2-normalized EEG embedding per trial. With MPNet, its shape is <code>(N, 768)</code>. The second output contains the EEG Tower tokens.</p>
+<h2 id="compare-eeg-with-label-text">Compare EEG with label text</h2>
+<p>LEAF maps the EEG trials and label texts into the same normalized embedding space. Their dot product is therefore cosine similarity. This example compares every trial with the text labels <code>Happy</code> and <code>Sad</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="st">&#39;Happy&#39;</span>, <span class="st">&#39;Sad&#39;</span>]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>prototypes <span class="op">=</span> torch.tensor(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    np.stack([text_embeddings[label] <span class="cf">for</span> label <span class="kw">in</span> labels]),</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    dtype<span class="op">=</span>torch.float32,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    device<span class="op">=</span>device,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>similarities <span class="op">=</span> eeg_embeddings <span class="op">@</span> prototypes.T</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>distances <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> similarities</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> [labels[index] <span class="cf">for</span> index <span class="kw">in</span> similarities.argmax(dim<span class="op">=</span><span class="dv">1</span>).tolist()]</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(similarities.shape)  <span class="co"># (2, 2)</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(distances.shape)     <span class="co"># (2, 2)</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(predictions)</span></code></pre></div>
+<p>Each row contains the comparison scores for one EEG trial, and each column corresponds to one candidate label. Replace the instruction and labels with the task of interest. If the required text is not already cached, add it to <code>configs/tasks.yaml</code> and run:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> init_text_embeddings.py mpnet-base</span></code></pre></div>
+</article>
+      <nav class="page-pager" aria-label="Documentation pages"><a class="pager-link previous" href="instruction-tuning.html"><span>Previous</span><strong>← Instruction tuning</strong></a><a class="pager-link next" href="direct-inference.html"><span>Next</span><strong>Direct Inference →</strong></a></nav>
+    </main>
+    <aside class="toc-column"><nav class="page-toc" aria-label="On this page"><h2>On this page</h2><a class="toc-level-2" href="#preprocess-and-align-the-channels">Preprocess and align the channels</a><a class="toc-level-2" href="#input-length-and-padding">Input length and padding</a><a class="toc-level-2" href="#extract-leaf-embeddings">Extract LEAF embeddings</a><a class="toc-level-2" href="#compare-eeg-with-label-text">Compare EEG with label text</a></nav></aside>
+  </div>
+  <script src="assets/docs.js?v=20260825-6" defer></script>
+</body>
+</html>

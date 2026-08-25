@@ -35,11 +35,12 @@ PAGES = [
     Page("datasets/held-out.md", "datasets/held-out.html", "Held-out datasets", "Datasets", "Held-out Datasets"),
     Page("pretraining.md", "pretraining.html", "Self-Supervised Pretraining", "Training", "Pretraining"),
     Page("instruction-tuning.md", "instruction-tuning.html", "Instruction tuning", "Training", "Instruction tuning"),
+    Page("using-leaf.md", "using-leaf.html", "Using LEAF with New EEG Data", "Usage", "Using LEAF with New EEG Data"),
     Page("direct-inference.md", "direct-inference.html", "Direct inference", "Evaluation", "Direct Inference"),
     Page("single-dataset-finetuning.md", "single-dataset-finetuning.html", "Dataset-specific fine-tuning with a classification head", "Evaluation", "Dataset-specific Fine-tuning"),
 ]
 
-GROUP_ORDER = ["Start", "Datasets", "Training", "Evaluation"]
+GROUP_ORDER = ["Start", "Datasets", "Training", "Usage", "Evaluation"]
 PAGE_BY_SOURCE = {page.source: page for page in PAGES}
 
 
